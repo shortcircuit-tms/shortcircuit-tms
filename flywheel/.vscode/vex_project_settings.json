@@ -1,0 +1,18 @@
+{
+	"project": {
+		"name": "flywheel",
+		"slot": 1,
+		"description": "program to run the flywheels",
+		"platform": "IQ2",
+		"creationDate": "Sun, 08 Dec 2024 01:35:34 GMT",
+		"language": "python",
+		"python": {
+			"main": "/src/main.py"
+		},
+		"sdkVersion": "IQ2_1_0_0_20"
+	},
+	"extension": {
+		"version": "0.6.1",
+		"json": 1
+	}
+}
