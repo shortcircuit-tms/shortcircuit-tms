@@ -4,6 +4,8 @@ import urandom
 
 # Brain should be defined by default
 brain=Brain()
+brain.screen.print("Starting FW")
+wait(2000, MSEC)
 
 # Robot configuration code
 brain_inertial = Inertial()
@@ -21,9 +23,9 @@ def initializeRandomSeed():
     yaxis = brain_inertial.acceleration(YAXIS) * 1000
     zaxis = brain_inertial.acceleration(ZAXIS) * 1000
     systemTime = brain.timer.system() * 100
-    urandom.seed(int(xaxis + yaxis + zaxis + systemTime)) 
-    
-# Initialize random seed 
+    urandom.seed(int(xaxis + yaxis + zaxis + systemTime))
+
+# Initialize random seed
 initializeRandomSeed()
 
 #endregion VEXcode Generated Robot Configuration
