@@ -1,3 +1,7 @@
+#
+# This code is to set up the flywheels independently
+# 
+
 #region VEXcode Generated Robot Configuration
 from vex import *
 import urandom
@@ -5,7 +9,7 @@ import urandom
 # Brain should be defined by default
 brain=Brain()
 brain.screen.print("Starting FW")
-wait(2000, MSEC)
+wait(1000, MSEC)
 
 # Robot configuration code
 brain_inertial = Inertial()
