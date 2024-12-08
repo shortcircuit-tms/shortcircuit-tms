@@ -4,15 +4,15 @@
 		"json": 2
 	},
 	"project": {
-		"name": "flywheel",
-		"description": "project to control the flywheels",
-		"creationDate": "12/7/2024, 6:06:25 PM",
+		"name": "number3",
+		"description": "Early version of shortcircuit team robot",
+		"creationDate": "12/7/2024, 6:26:32 PM",
 		"platform": "IQ2",
 		"language": "python",
 		"slot": 1,
 		"sdkVersion": "IQ2_1_0_0_20",
 		"python": {
-			"main": "src/main.py"
+			"main": "src/components/flywheel.py"
 		}
 	}
 }
