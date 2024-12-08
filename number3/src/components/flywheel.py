@@ -1,10 +1,17 @@
 #
 # This code is to set up the flywheels independently
+#
+# The position from the goal base is : XXXX
+#
+# The speeds for top and bottom goals are:
 # 
 
 #region VEXcode Generated Robot Configuration
 from vex import *
 import urandom
+
+TOP_GOAL_VELOCITY = 100
+BOTTOM_GOAL_VELOCITY = 100
 
 # Brain should be defined by default
 brain=Brain()
@@ -40,7 +47,7 @@ launcher_speed = 0
 def when_started1():
     global myVariable, launcher_speed
     Ball_Launcher.set_max_torque(100, PERCENT)
-    Ball_Launcher.set_velocity(100, PERCENT)
+    Ball_Launcher.set_velocity(TOP_GOAL_VELOCITY, PERCENT)
 
 def onevent_controllerbuttonLUp_pressed_0():
     global myVariable, launcher_speed
