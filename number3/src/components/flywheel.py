@@ -11,7 +11,9 @@ from vex import *
 import urandom
 
 TOP_GOAL_VELOCITY = 100
-BOTTOM_GOAL_VELOCITY = 100
+TOP_GOAL_TORQUE = 100
+BOTTOM_GOAL_VELOCITY = 20
+BOTTOM_GOAL_TORQUE = 20
 
 # Brain should be defined by default
 brain=Brain()
@@ -43,11 +45,13 @@ initializeRandomSeed()
 
 myVariable = 0
 launcher_speed = 0
+in_top_goal_mode = True
 
 def when_started1():
-    global myVariable, launcher_speed
-    Ball_Launcher.set_max_torque(100, PERCENT)
+    global myVariable, launcher_speed, in_top_goal_mode
+    Ball_Launcher.set_max_torque(TOP_GOAL_TORQUE, PERCENT)
     Ball_Launcher.set_velocity(TOP_GOAL_VELOCITY, PERCENT)
+    in_top_goal_mode = True
 
 def onevent_controllerbuttonLUp_pressed_0():
     global myVariable, launcher_speed
@@ -57,9 +61,26 @@ def onevent_controllerbuttonLDown_pressed_0():
     global myVariable, launcher_speed
     Ball_Launcher.spin(FORWARD)
 
+def onevent_controllerbuttonRUp_pressed_0():
+    global myVariable, launcher_speed, in_top_goal_mode
+    if in_top_goal_mode:
+        Ball_Launcher.set_max_torque(BOTTOM_GOAL_TORQUE, PERCENT)
+        Ball_Launcher.set_velocity(BOTTOM_GOAL_VELOCITY, PERCENT)
+        in_top_goal_mode = False
+    else:
+        Ball_Launcher.set_max_torque(TOP_GOAL_TORQUE, PERCENT)
+        Ball_Launcher.set_velocity(TOP_GOAL_VELOCITY, PERCENT)
+        in_top_goal_mode = True
+
+def onevent_controllerbuttonRDown_pressed_0():
+    pass
+
 # system event handlers
 controller.buttonLUp.pressed(onevent_controllerbuttonLUp_pressed_0)
 controller.buttonLDown.pressed(onevent_controllerbuttonLDown_pressed_0)
+controller.buttonRUp.pressed(onevent_controllerbuttonRUp_pressed_0)
+controller.buttonRDown.pressed(onevent_controllerbuttonRDown_pressed_0)
+
 # add 15ms delay to make sure events are registered correctly.
 wait(15, MSEC)
 
