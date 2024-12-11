@@ -6,10 +6,17 @@
 from vex import *
 import urandom
 
+
 TOP_GOAL_VELOCITY = 100
 TOP_GOAL_TORQUE = 100
 BOTTOM_GOAL_VELOCITY = 20
 BOTTOM_GOAL_TORQUE = 20
+
+# Port configurations
+# All L(left) R(right) directions are defined from viewpoint
+# looking from behind the bot towards the flyweel
+BALL_LAUNCHER_L_PORT = Ports.PORT6
+BALL_LAUNCHER_R_PORT = Ports.PORT12
 
 # Brain should be defined by default
 brain=Brain()
@@ -19,9 +26,9 @@ wait(1000, MSEC)
 # Robot configuration code
 brain_inertial = Inertial()
 controller = Controller()
-Ball_Launcher_motor_a = Motor(Ports.PORT6, True)
-Ball_Launcher_motor_b = Motor(Ports.PORT12, False)
-Ball_Launcher = MotorGroup(Ball_Launcher_motor_a, Ball_Launcher_motor_b)
+Ball_Launcher_motor_R = Motor(BALL_LAUNCHER_R_PORT, True)
+Ball_Launcher_motor_L = Motor(BALL_LAUNCHER_L_PORT, False)
+Ball_Launcher = MotorGroup(Ball_Launcher_motor_R, Ball_Launcher_motor_L)
 
 Intake_motor = Motor(Ports.PORT1, True)
 
