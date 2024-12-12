@@ -15,26 +15,37 @@ BOTTOM_GOAL_TORQUE = 20
 # Port configurations
 # All L(left) R(right) directions are defined from viewpoint
 # looking from behind the bot towards the flyweel
-BALL_LAUNCHER_L_PORT = Ports.PORT6
-BALL_LAUNCHER_R_PORT = Ports.PORT12
+FLYWHEEL_L_PORT = Ports.PORT6
+FLYWHEEL_R_PORT = Ports.PORT12
+INTAKE_PORT = Ports.PORT5
+DRIVETRAIN_R_PORT = Ports.PORT7
+DRIVETRAIN_L_PORT = Ports.PORT1
 
 # Brain should be defined by default
 brain=Brain()
-brain.screen.print("Starting FW")
-wait(1000, MSEC)
+brain.screen.print("N3-MAIN\n")
+brain.screen.next_row()
+brain.screen.print("FW_R_L:12,6")
+brain.screen.next_row()
+brain.screen.print("IT:5")
+brain.screen.next_row()
+brain.screen.print("DT_R_L:7,1")
+
+
+wait(10, MSEC)
 
 # Robot configuration code
 brain_inertial = Inertial()
 controller = Controller()
-Ball_Launcher_motor_R = Motor(BALL_LAUNCHER_R_PORT, True)
-Ball_Launcher_motor_L = Motor(BALL_LAUNCHER_L_PORT, False)
-Ball_Launcher = MotorGroup(Ball_Launcher_motor_R, Ball_Launcher_motor_L)
+flywheel_motor_R = Motor(FLYWHEEL_R_PORT, True)
+flywheel_motor_L = Motor(FLYWHEEL_L_PORT, False)
+flywheel = MotorGroup(flywheel_motor_R, flywheel_motor_L)
 
-Intake_motor = Motor(Ports.PORT1, True)
+intake = Motor(INTAKE_PORT, True)
 
-Drivetrain_motor_a = Motor(Ports.PORT5, True)
-Drivetrain_motor_b = Motor(Ports.PORT7, True)
-Drivetrain = MotorGroup(Drivetrain_motor_a,Drivetrain_motor_b)
+Drivetrain_motor_L = Motor(DRIVETRAIN_L_PORT, True)
+Drivetrain_motor_R = Motor(DRIVETRAIN_R_PORT, True)
+Drivetrain = MotorGroup(Drivetrain_motor_R, Drivetrain_motor_L)
 
 
 # generating and setting random seed
@@ -55,47 +66,59 @@ myVariable = 0
 launcher_speed = 0
 in_top_goal_mode = True
 is_flywheel_on = False
+is_intake_on = False
 
 def when_started1():
-    global myVariable, launcher_speed, in_top_goal_mode, is_flywheel_on
-    Ball_Launcher.set_max_torque(TOP_GOAL_TORQUE, PERCENT)
-    Ball_Launcher.set_velocity(TOP_GOAL_VELOCITY, PERCENT)
+    global myVariable, launcher_speed, in_top_goal_mode, is_flywheel_on, is_intake_on
+    flywheel.set_max_torque(TOP_GOAL_TORQUE, PERCENT)
+    flywheel.set_velocity(TOP_GOAL_VELOCITY, PERCENT)
     in_top_goal_mode = True
     is_flywheel_on = False
+    is_intake_on = False
 
 
 def flywheel_on_off():
     global myVariable, launcher_speed, is_flywheel_on
     if is_flywheel_on:
-        Ball_Launcher.stop()
+        flywheel.stop()
         is_flywheel_on = False
     else:
-        Ball_Launcher.spin(FORWARD)
+        flywheel.spin(FORWARD)
         is_flywheel_on = True
 
-def fly_wheel_goal_select():
+def flywheel_goal_select():
     global myVariable, launcher_speed, in_top_goal_mode
     if in_top_goal_mode:
-        Ball_Launcher.set_max_torque(BOTTOM_GOAL_TORQUE, PERCENT)
-        Ball_Launcher.set_velocity(BOTTOM_GOAL_VELOCITY, PERCENT)
+        flywheel.set_max_torque(BOTTOM_GOAL_TORQUE, PERCENT)
+        flywheel.set_velocity(BOTTOM_GOAL_VELOCITY, PERCENT)
         in_top_goal_mode = False
     else:
-        Ball_Launcher.set_max_torque(TOP_GOAL_TORQUE, PERCENT)
-        Ball_Launcher.set_velocity(TOP_GOAL_VELOCITY, PERCENT)
+        flywheel.set_max_torque(TOP_GOAL_TORQUE, PERCENT)
+        flywheel.set_velocity(TOP_GOAL_VELOCITY, PERCENT)
         in_top_goal_mode = True
 
 def onevent_controllerbuttonLUp_pressed_0():
     global myVariable, launcher_speed
-    Ball_Launcher.spin(FORWARD)
+    flywheel.spin(FORWARD)
+
+def intake_on_off():
+    global intake, is_intake_on
+    if is_intake_on:
+        intake.stop()
+        is_intake_on = False 
+    else:
+        intake.spin(FORWARD)
+        is_intake_on = True
+
 
 def onevent_controllerbuttonLDown_pressed_0():
     pass
 
 # system event handlers
-controller.buttonLUp.pressed(onevent_controllerbuttonLUp_pressed_0)
+controller.buttonLUp.pressed(intake_on_off)
 controller.buttonLDown.pressed(onevent_controllerbuttonLDown_pressed_0)
 controller.buttonRUp.pressed(flywheel_on_off)
-controller.buttonRDown.pressed(fly_wheel_goal_select)
+controller.buttonRDown.pressed(flywheel_goal_select)
 # add 15ms delay to make sure events are registered correctly.
 wait(15, MSEC)
 
