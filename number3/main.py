@@ -48,9 +48,9 @@ flywheel_motor_L = Motor(FLYWHEEL_L_PORT, False)
 flywheel = MotorGroup(flywheel_motor_R, flywheel_motor_L)
 top_intake = Motor(TOP_INTAKE_PORT, False)
 bottom_intake = Motor(BOTTOM_INTAKE_PORT, True)
-Drivetrain_motor_L = Motor(DRIVETRAIN_L_PORT, True)
-Drivetrain_motor_R = Motor(DRIVETRAIN_R_PORT, True)
-Drivetrain = MotorGroup(Drivetrain_motor_R, Drivetrain_motor_L)
+drivetrain_motor_L = Motor(DRIVETRAIN_L_PORT, False)
+drivetrain_motor_R = Motor(DRIVETRAIN_R_PORT, True)
+drivetrain = DriveTrain(drivetrain_motor_L, drivetrain_motor_R, 319.19, 295, 40, MM, 1)
 
 
 # generating and setting random seed
@@ -101,7 +101,7 @@ def flywheel_on_off():
         is_flywheel_on = True
 
 def flywheel_goal_select():
-    global launcher_speed, in_top_goal_mode
+    global launcher_speed, in_top_goal_mode, flywheel_bg_velocity, flywheel_tg_velocity
     if in_top_goal_mode:
         flywheel.set_max_torque(FLYWHEEL_TORQUE, PERCENT)
         flywheel.set_velocity(flywheel_tg_velocity, PERCENT)
@@ -170,10 +170,10 @@ controller.buttonLUp.pressed(flywheel_on_off)
 controller.buttonLDown.pressed(flywheel_goal_select)
 controller.buttonRUp.pressed(bottom_intake_on_off)
 controller.buttonRDown.pressed(top_intake_on_off)
-controller.buttonEUp.pressed(incr_flywheel_tg_velocity)
-controller.buttonEDown.pressed(decr_flywheel_tg_velocity)
-controller.buttonFUp.pressed(incr_flywheel_bg_velocity)
-controller.buttonFDown.pressed(decr_flywheel_bg_velocity)
+controller.buttonEUp.pressed(incr_flywheel_bg_velocity)
+controller.buttonEDown.pressed(decr_flywheel_bg_velocity)
+controller.buttonFUp.pressed(incr_flywheel_tg_velocity)
+controller.buttonFDown.pressed(decr_flywheel_tg_velocity)
 # add 15ms delay to make sure events are registered correctly.
 wait(15, MSEC)
 
