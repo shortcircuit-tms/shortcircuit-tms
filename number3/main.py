@@ -163,7 +163,7 @@ def decr_flywheel_bg_velocity():
     if updated_bg_velocity < 0:
         updated_bg_velocity = 0
 
-        flywheel_bg_velocity = updated_bg_velocity
+    flywheel_bg_velocity = updated_bg_velocity
 
 # system event handlers
 controller.buttonLUp.pressed(flywheel_on_off) 
