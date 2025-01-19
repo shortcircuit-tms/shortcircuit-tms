@@ -50,9 +50,12 @@ flywheel_motor_L = Motor(FLYWHEEL_L_PORT, False)
 flywheel = MotorGroup(flywheel_motor_R, flywheel_motor_L)
 top_intake = Motor(TOP_INTAKE_PORT, False)
 bottom_intake = Motor(BOTTOM_INTAKE_PORT, True)
-drivetrain_motor_L = Motor(DRIVETRAIN_L_PORT, False)
-drivetrain_motor_R = Motor(DRIVETRAIN_R_PORT, True)
-drivetrain = DriveTrain(drivetrain_motor_L, drivetrain_motor_R, 319.19, 295, 40, MM, 1)
+
+# set up drivetrain
+left_drive_smart = Motor(DRIVETRAIN_L_PORT, 1.0, False)
+right_drive_smart = Motor(DRIVETRAIN_R_PORT, 1.0, True)
+brain_inertial = Inertial()
+drivetrain = SmartDrive(left_drive_smart, right_drive_smart, brain_inertial, 250)
 
 
 # generating and setting random seed
@@ -182,7 +185,79 @@ def print_flywheel_veocity():
     global flywheel_tg_velocity, flywheel_bg_velocity
     text = "FWV_T_B=" + str(flywheel_tg_velocity) + "," + str(flywheel_bg_velocity)
     print_row(text=text, row_number=5)
- 
+
+vexcode_initial_drivetrain_calibration_completed = False
+def calibrate_drivetrain():
+    # Calibrate the Drivetrain Inertial
+    global vexcode_initial_drivetrain_calibration_completed
+    sleep(200, MSEC)
+    brain.screen.print("Calibrating")
+    brain.screen.next_row()
+    brain.screen.print("Inertial")
+    brain_inertial.calibrate()
+    while brain_inertial.is_calibrating():
+        sleep(25, MSEC)
+    vexcode_initial_drivetrain_calibration_completed = True
+    brain.screen.clear_screen()
+    brain.screen.set_cursor(1, 1)
+
+# define variables used for controlling motors based on controller inputs
+drivetrain_l_needs_to_be_stopped_controller = False
+drivetrain_r_needs_to_be_stopped_controller = False
+
+# define a task that will handle monitoring inputs from controller
+def rc_auto_loop_function_controller():
+    global drivetrain_l_needs_to_be_stopped_controller, drivetrain_r_needs_to_be_stopped_controller, remote_control_code_enabled
+    # process the controller input every 20 milliseconds
+    # update the motors based on the input values
+    while True:
+        if remote_control_code_enabled:
+            
+            # calculate the drivetrain motor velocities from the controller joystick axies
+            # left = axisA
+            # right = axisD
+            drivetrain_left_side_speed = controller.axisA.position()
+            drivetrain_right_side_speed = controller.axisD.position()
+            
+            # check if the value is inside of the deadband range
+            if drivetrain_left_side_speed < 5 and drivetrain_left_side_speed > -5:
+                # check if the left motor has already been stopped
+                if drivetrain_l_needs_to_be_stopped_controller:
+                    # stop the left drive motor
+                    left_drive_smart.stop()
+                    # tell the code that the left motor has been stopped
+                    drivetrain_l_needs_to_be_stopped_controller = False
+            else:
+                # reset the toggle so that the deadband code knows to stop the left motor next
+                # time the input is in the deadband range
+                drivetrain_l_needs_to_be_stopped_controller = True
+            # check if the value is inside of the deadband range
+            if drivetrain_right_side_speed < 5 and drivetrain_right_side_speed > -5:
+                # check if the right motor has already been stopped
+                if drivetrain_r_needs_to_be_stopped_controller:
+                    # stop the right drive motor
+                    right_drive_smart.stop()
+                    # tell the code that the right motor has been stopped
+                    drivetrain_r_needs_to_be_stopped_controller = False
+            else:
+                # reset the toggle so that the deadband code knows to stop the right motor next
+                # time the input is in the deadband range
+                drivetrain_r_needs_to_be_stopped_controller = True
+            
+            # only tell the left drive motor to spin if the values are not in the deadband range
+            if drivetrain_l_needs_to_be_stopped_controller:
+                left_drive_smart.set_velocity(drivetrain_left_side_speed, PERCENT)
+                left_drive_smart.spin(FORWARD)
+            # only tell the right drive motor to spin if the values are not in the deadband range
+            if drivetrain_r_needs_to_be_stopped_controller:
+                right_drive_smart.set_velocity(drivetrain_right_side_speed, PERCENT)
+                right_drive_smart.spin(FORWARD)
+        # wait before repeating the process
+        wait(20, MSEC)
+
+# Calibrate the Drivetrain
+calibrate_drivetrain()
+
 # system event handlers
 controller.buttonLUp.pressed(flywheel_on_off) 
 controller.buttonLDown.pressed(flywheel_goal_select)
@@ -196,3 +271,6 @@ controller.buttonEDown.pressed(decr_flywheel_tg_velocity)
 wait(15, MSEC)
 
 when_started()
+remote_control_code_enabled = True
+rc_auto_loop_thread_controller = Thread(rc_auto_loop_function_controller)
+
