@@ -8,12 +8,13 @@ import urandom
 
 
 INIT_TG_FLYWHEEL_VELOCITY = 100
-INIT_BG_FLYWHEEL_VELOCITY = 60
+INIT_BG_FLYWHEEL_VELOCITY = 34
 FLYWHEEL_TORQUE = 100
 INTAKE_VELOCITY = 100
 INTAKE_TORQUE = 100
 DRIVETRAIN_VELOCITY = 100
 DRIVETRAIN_TORQUE = 100
+column_number = 1
 
 flywheel_tg_velocity = INIT_TG_FLYWHEEL_VELOCITY
 flywheel_bg_velocity = INIT_BG_FLYWHEEL_VELOCITY
@@ -37,6 +38,7 @@ brain.screen.next_row()
 brain.screen.print("DT_R_L:11,5")
 brain.screen.next_row()
 brain.screen.print("IT_T_B;10,4")
+brain.screen.new_line()
 
 wait(10, MSEC)
 
@@ -76,7 +78,7 @@ is_bottom_intake_on = False
 
 
 def when_started():
-    global launcher_speed, in_top_goal_mode, is_flywheel_on, flywheel_tg_velocity, flywheel_bg_velocity
+    global launcher_speed, in_top_goal_mode, is_flywheel_on, flywheel_tg_velocity, flywheel_bg_velocity, column_number
     global top_intake, bottom_intake, is_top_intake_on, is_bottom_intake_on
     flywheel_tg_velocity = INIT_TG_FLYWHEEL_VELOCITY
     flywheel_bg_velocity = INIT_BG_FLYWHEEL_VELOCITY
@@ -132,48 +134,64 @@ def bottom_intake_on_off():
 def incr_flywheel_tg_velocity():
     global flywheel_tg_velocity
 
-    updated_tg_velocity = flywheel_tg_velocity + 10
+    updated_tg_velocity = flywheel_tg_velocity + 2
     if updated_tg_velocity > 100:
         updated_tg_velocity = 100
     
     flywheel_tg_velocity = updated_tg_velocity
+    print_flywheel_veocity()    
+
 
 def decr_flywheel_tg_velocity():
     global flywheel_tg_velocity
 
-    updated_tg_velocity = flywheel_tg_velocity - 10
+    updated_tg_velocity = flywheel_tg_velocity - 2
     if updated_tg_velocity < 0:
         updated_tg_velocity = 0
 
     flywheel_tg_velocity = updated_tg_velocity
+    print_flywheel_veocity()    
 
 def incr_flywheel_bg_velocity():
     global flywheel_bg_velocity
 
-    updated_bg_velocity = flywheel_bg_velocity + 10
+    updated_bg_velocity = flywheel_bg_velocity + 2
     if updated_bg_velocity > 100:
         updated_bg_velocity = 100
 
-        flywheel_bg_velocity = updated_bg_velocity
+    flywheel_bg_velocity = updated_bg_velocity
+    print_flywheel_veocity()    
 
 def decr_flywheel_bg_velocity():
     global flywheel_bg_velocity
     
-    updated_bg_velocity = flywheel_bg_velocity - 10
+    updated_bg_velocity = flywheel_bg_velocity - 2
     if updated_bg_velocity < 0:
         updated_bg_velocity = 0
 
-        flywheel_bg_velocity = updated_bg_velocity
+    flywheel_bg_velocity = updated_bg_velocity
+    print_flywheel_veocity()    
 
+def print_row(text, row_number, delete_row_before_print=True):
+    if delete_row_before_print:
+        brain.screen.clear_row(row_number)
+    brain.screen.set_cursor(row_number, 1)
+    brain.screen.print(text)
+                       
+def print_flywheel_veocity():
+    global flywheel_tg_velocity, flywheel_bg_velocity
+    text = "FWV_T_B=" + str(flywheel_tg_velocity) + "," + str(flywheel_bg_velocity)
+    print_row(text=text, row_number=5)
+ 
 # system event handlers
 controller.buttonLUp.pressed(flywheel_on_off) 
 controller.buttonLDown.pressed(flywheel_goal_select)
 controller.buttonRUp.pressed(bottom_intake_on_off)
 controller.buttonRDown.pressed(top_intake_on_off)
-controller.buttonEUp.pressed(incr_flywheel_bg_velocity)
-controller.buttonEDown.pressed(decr_flywheel_bg_velocity)
-controller.buttonFUp.pressed(incr_flywheel_tg_velocity)
-controller.buttonFDown.pressed(decr_flywheel_tg_velocity)
+controller.buttonFUp.pressed(incr_flywheel_bg_velocity)
+controller.buttonFDown.pressed(decr_flywheel_bg_velocity)
+controller.buttonEUp.pressed(incr_flywheel_tg_velocity)
+controller.buttonEDown.pressed(decr_flywheel_tg_velocity)
 # add 15ms delay to make sure events are registered correctly.
 wait(15, MSEC)
 
