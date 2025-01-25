@@ -22,7 +22,7 @@ flywheel_bg_velocity = INIT_BG_FLYWHEEL_VELOCITY
 # Port configurations
 # All L(left) R(right) directions are defined from viewpoint
 # looking from behind the bot towards the flyweel
-FLYWHEEL_L_PORT = Ports.PORT6
+FLYWHEEL_L_PORT = Ports.PORT3
 FLYWHEEL_R_PORT = Ports.PORT12 
 DRIVETRAIN_L_PORT = Ports.PORT5
 DRIVETRAIN_R_PORT = Ports.PORT11
