@@ -39,8 +39,8 @@ wait(10, MSEC)
 # Robot configuration code
 brain_inertial = Inertial()
 controller = Controller()
-conveyor_motor_r = Motor(CONVEYER_R_PORT, True)
-conveyor_motor_l = Motor(CONVEYER_L_PORT, False)
+conveyor_motor_r = Motor(CONVEYER_R_PORT, False)
+conveyor_motor_l = Motor(CONVEYER_L_PORT, True)
 conveyor = MotorGroup(conveyor_motor_r, conveyor_motor_l)
 intake_motor = Motor(INTAKE_PORT, False)
 catapult_motor = Motor(CATAPULT_PORT, False)
@@ -87,6 +87,7 @@ def when_started():
     is_catapult_on = False
     catapult_motor.set_max_torque(CATAPULT_TORQUE, PERCENT)
     catapult_motor.set_velocity(CATAPULT_VELOCITY, PERCENT)
+    catapult_motor.set_stopping(HOLD)
 
 def conveyer_on_off():
     global is_conveyer_on, conveyor
