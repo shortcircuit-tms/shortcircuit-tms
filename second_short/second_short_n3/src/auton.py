@@ -37,7 +37,7 @@ DISTANCE_SENSOR_PORT = Ports.PORT11
 
 # Brain should be defined by default
 brain=Brain()
-brain.screen.print("SH_N3\n")
+brain.screen.print("SH_N3: Skills\n")
 brain.screen.next_row()
 brain.screen.new_line()
 
