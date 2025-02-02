@@ -16,11 +16,6 @@ CATAPULT_TORQUE = 100
 CONVEYOR_VELOCITY = 100
 CONVEYOR_TORQUE = 100
 
-CONVEYOR_INIT = 0
-CONVEYOR_UNLOADING = 1
-CONVEYOR_LOADING = 2
-CONVEYOR_LOADED = 3
-
 # Port configurations
 # All L(left) R(right) directions are defined from viewpoint
 # looking from behind the bot towards the flyweel
@@ -55,8 +50,8 @@ catapult_sensor = Bumper(CATAPULT_SENSOR_PORT)
 optical_sensor = Optical(OPTICAL_SENSOR_PORT)
 
 # set up drivetrain
-left_drive_smart = Motor(DRIVETRAIN_L_PORT, 1.0, True)
-right_drive_smart = Motor(DRIVETRAIN_R_PORT, 1.0, False)
+left_drive_smart = Motor(DRIVETRAIN_L_PORT, 1.0, False)
+right_drive_smart = Motor(DRIVETRAIN_R_PORT, 1.0, True)
 brain_inertial = Inertial()
 drivetrain = SmartDrive(left_drive_smart, right_drive_smart, brain_inertial, 250)
 
@@ -77,17 +72,17 @@ initializeRandomSeed()
 
 myVariable = 0
 launcher_speed = 0
-conveyer_state = CONVEYOR_INIT 
+is_conveyer_on = False
 is_intake_on = False
 is_catapult_loaded = True
 is_catapult_on = False
 
 def when_started():
-    global conveyor_state, conveyor
+    global is_conveyer_on, conveyor_motor_r, conveyor_motor_l
     global is_intake_on, intake_motor
     global is_catapult_on, catapult_motor, is_catapult_loaded
 
-    conveyor_state = CONVEYOR_INIT
+    is_conveyer_on = False
     conveyor.set_max_torque(CONVEYOR_TORQUE, PERCENT)
     conveyor.set_velocity(CONVEYOR_VELOCITY, PERCENT)
     is_intake_on = False
@@ -99,23 +94,14 @@ def when_started():
     catapult_motor.set_velocity(CATAPULT_VELOCITY, PERCENT)
     catapult_motor.set_stopping(HOLD)
 
-def conveyor_load():
-    global conveyor, conveyor_state
-    if conveyor_state == CONVEYOR_INIT or conveyor_state == CONVEYOR_UNLOADING:
-        conveyor.spin(FORWARD)
-        conveyor_state = CONVEYOR_LOADING
-
-def conveyor_unload():
-    global conveyor, conveyor_state
-    if  conveyor_state == CONVEYOR_LOADED:
-        conveyor.spin(FORWARD)
-        conveyor_state = CONVEYOR_UNLOADING
-
-def conveyor_hold():
-    global conveyor, conveyor_state
-    if conveyor_state == CONVEYOR_LOADING:
+def conveyer_on_off():
+    global is_conveyer_on, conveyor, is_catapult_loaded
+    if is_conveyer_on:
         conveyor.stop()
-        conveyor_state = CONVEYOR_LOADED       
+        is_conveyer_on = False
+    else:
+        conveyor.spin(FORWARD)
+        is_conveyer_on = True
 
 def catapult_button_on_off():
     global is_catapult_on, catapult_motor
@@ -144,6 +130,9 @@ def intake_on_off():
     else:
         intake_motor.spin(FORWARD)
         is_intake_on = True
+
+def ball_found():
+    pass
 
 
 ## Strat of drivetrain code that was derived from VEX IQ
@@ -225,9 +214,7 @@ calibrate_drivetrain()
 # system event handlers
 controller.buttonLUp.pressed(catapult_button_on_off)
 controller.buttonLDown.pressed(intake_on_off)
-controller.buttonRUp.pressed(conveyor_load)
-controller.buttonRDown.pressed(conveyor_unload)
-optical_sensor.object_detected(conveyor_hold)
+controller.buttonRUp.pressed(conveyer_on_off)
 catapult_sensor.pressed(catapult_bumper_pressed)
 catapult_sensor.released(catapult_bumper_released)
 # add 15ms delay to make sure events are registered correctly.
