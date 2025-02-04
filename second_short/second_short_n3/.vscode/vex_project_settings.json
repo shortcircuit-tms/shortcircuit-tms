@@ -9,10 +9,10 @@
 		"creationDate": "1/31/2025, 4:39:12 PM",
 		"platform": "IQ2",
 		"language": "python",
-		"slot": 3,
+		"slot": 2,
 		"sdkVersion": "IQ2_1_0_0_20",
 		"python": {
-			"main": "src/main.py"
+			"main": "src/skills.py"
 		}
 	}
 }

@@ -17,6 +17,15 @@ CATAPULT_TORQUE = 100
 CONVEYOR_VELOCITY = 100
 CONVEYOR_TORQUE = 100
 
+AT_THE_GOAL_FRONT_S_DIST_TH = 30
+AT_THE_GOAL_LEFT_S_DIST_TH = 500
+AWAY_FROM_GOAL_FRONT_S_DIST_TH = 200 
+
+FROM_GOAL_X_DISTANCE  = 1450
+FROM_GOAL_X_ANGLE = 30
+FROM_GOAL_I_DISTANCE = 1450
+FROM_GOAL_MOVE_BACK = 250
+
 CONVEYOR_INIT = 0
 CONVEYOR_UNLOADING = 1
 CONVEYOR_UNLOADED = 2
@@ -32,10 +41,12 @@ CATAPULT_PORT = Ports.PORT2
 INTAKE_PORT = Ports.PORT4
 CONVEYER_R_PORT = Ports.PORT5
 OPTICAL_SENSOR_PORT = Ports.PORT6
+RIGHT_DISTANCE_SENSOR_PORT = Ports.PORT7
 CATAPULT_SENSOR_PORT = Ports.PORT8
 DRIVETRAIN_L_PORT = Ports.PORT9
 DRIVETRAIN_R_PORT = Ports.PORT10
-DISTANCE_SENSOR_PORT = Ports.PORT11
+FRONT_DISTANCE_SENSOR_PORT = Ports.PORT11
+LEFT_DISTANCE_SENSOR_PORT = Ports.PORT12
 
 # Brain should be defined by default
 brain=Brain()
@@ -55,7 +66,9 @@ intake_motor = Motor(INTAKE_PORT, True)
 catapult_motor = Motor(CATAPULT_PORT, False)
 catapult_sensor = Bumper(CATAPULT_SENSOR_PORT)
 optical_sensor = Optical(OPTICAL_SENSOR_PORT)
-front_distance = Distance(DISTANCE_SENSOR_PORT)
+front_distance = Distance(FRONT_DISTANCE_SENSOR_PORT)
+left_distance = Distance(LEFT_DISTANCE_SENSOR_PORT)
+#right_distance = Distance(RIGHT_DISTANCE_SENSOR_PORT)
 
 # set up drivetrain
 left_drive_smart = Motor(DRIVETRAIN_L_PORT, 1.0, False)
@@ -84,11 +97,17 @@ is_intake_on = False
 is_catapult_loaded = True
 is_catapult_on = False
 at_the_goal = False
+at_the_right_goal = False
+at_the_left_goal = False
+#If value is true, it's on the left, and if it's false, it's on the right
 
 def when_started():
     global conveyor_state, conveyor
     global is_intake_on, intake_motor
     global is_catapult_on, catapult_motor, is_catapult_loaded
+    global drivetrain_l_distance_sensor, drivetrain_r_distance_sensor
+    global at_the_goal, at_the_left_goal, at_the_right_goal
+    global from_goal_x_angle, from_goal_x_dist, from_goal_I_dist
 
     conveyor_state = CONVEYOR_INIT
     conveyor.set_max_torque(CONVEYOR_TORQUE, PERCENT)
@@ -102,6 +121,10 @@ def when_started():
     catapult_motor.set_velocity(CATAPULT_VELOCITY, PERCENT)
     catapult_motor.set_stopping(HOLD)
     drivetrain.set_turn_velocity(DRIVETRAIN_TURN_VELOCITY, PERCENT)
+    at_the_goal = False
+    at_the_right_goal = False
+    at_the_left_goal = False
+
 
 def conveyor_load():
     global conveyor, conveyor_state
@@ -123,6 +146,8 @@ def conveyor_hold():
 
 def catapult_button_on_off():
     global is_catapult_on, catapult_motor, at_the_goal
+    global at_the_right_goal, at_the_left_goal
+
     # this is just to stop catapult midway
     if is_catapult_on:
         catapult_motor.stop()
@@ -130,19 +155,30 @@ def catapult_button_on_off():
     else:
         catapult_motor.spin(FORWARD)
         is_catapult_on = True
-        if front_distance.object_distance() < 30:
+        if front_distance.object_distance() < AT_THE_GOAL_FRONT_S_DIST_TH:
             at_the_goal = True
+            if left_distance.object_distance() < AT_THE_GOAL_LEFT_S_DIST_TH:
+                at_the_left_goal = True
+            else:
+                at_the_right_goal = True
 
 def ball_passed_through_conveyor():
-    global at_the_goal
-    if front_distance.object_distance() < 30:
+    global at_the_goal, at_the_right_goal, at_the_left_goal
+    if front_distance.object_distance() < AT_THE_GOAL_FRONT_S_DIST_TH:
         at_the_goal = True
+        if left_distance.object_distance() < AT_THE_GOAL_LEFT_S_DIST_TH:
+            at_the_left_goal = True
+        else:
+            at_the_right_goal = True
+
 
 def away_from_goal():
-    global at_the_goal, conveyor_state
+    global at_the_goal, conveyor_state, at_the_right_goal, at_the_left_goal
     while True:
-        if front_distance.object_distance() > 200 and at_the_goal:
+        if front_distance.object_distance() > AWAY_FROM_GOAL_FRONT_S_DIST_TH and at_the_goal:
             at_the_goal = False
+            at_the_left_goal = False
+            at_the_right_goal = False
             conveyor_state = CONVEYOR_UNLOADED
             conveyor.stop()
         wait(50, MSEC)
@@ -166,7 +202,65 @@ def intake_on_off():
         intake_motor.spin(FORWARD)
         is_intake_on = True
 
+def go_to_left_back_q():
+    global at_the_right_goal, at_the_right_goal
 
+    if at_the_left_goal == True:
+        drivetrain.drive_for(direction=FORWARD, 
+                             distance=FROM_GOAL_I_DISTANCE, 
+                             units=MM,
+                             velocity=100,
+                             units_v=PERCENT)
+
+    elif at_the_right_goal == True:
+        drivetrain.drive_for(direction=FORWARD, 
+                             distance=FROM_GOAL_MOVE_BACK, 
+                             units=MM,
+                             velocity=100,
+                             units_v=PERCENT,
+                             wait=True)
+        drivetrain.turn_for(direction=RIGHT, 
+                            angle=FROM_GOAL_X_ANGLE, 
+                            units=DEGREES,
+                            velocity=30,
+                            units_v=PERCENT,
+                            wait=True)
+        drivetrain.drive_for(direction=FORWARD, 
+                             distance=FROM_GOAL_X_DISTANCE, 
+                             units=MM,
+                             velocity=100,
+                             units_v=PERCENT)
+
+def go_to_right_back_q():
+    global at_the_right_goal, at_the_right_goal
+
+    if at_the_right_goal == True:
+        drivetrain.drive_for(direction=FORWARD, 
+                             distance=FROM_GOAL_I_DISTANCE, 
+                             units=MM,
+                             velocity=100,
+                             units_v=PERCENT)
+
+    elif at_the_left_goal == True:
+        drivetrain.drive_for(direction=FORWARD, 
+                             distance=FROM_GOAL_MOVE_BACK, 
+                             units=MM,
+                             velocity=100,
+                             units_v=PERCENT,
+                             wait=True)
+        drivetrain.turn_for(direction=LEFT, 
+                            angle=FROM_GOAL_X_ANGLE, 
+                            units=DEGREES,
+                            velocity=30,
+                            units_v=PERCENT,
+                            wait=True)
+        drivetrain.drive_for(direction=FORWARD, 
+                             distance=FROM_GOAL_X_DISTANCE, 
+                             units=MM,
+                             velocity=100,
+                             units_v=PERCENT)
+      
+ 
 ## Strat of drivetrain code that was derived from VEX IQ
 ## Do not touch this code unless you know what you are doing
 vexcode_initial_drivetrain_calibration_completed = False
@@ -248,6 +342,8 @@ controller.buttonLUp.pressed(catapult_button_on_off)
 controller.buttonLDown.pressed(intake_on_off)
 controller.buttonRUp.pressed(conveyor_load)
 controller.buttonRDown.pressed(conveyor_unload)
+controller.buttonEUp.pressed(go_to_left_back_q)
+controller.buttonEDown.pressed(go_to_right_back_q)
 optical_sensor.object_detected(conveyor_hold)
 catapult_sensor.pressed(catapult_bumper_pressed)
 catapult_sensor.released(catapult_bumper_released)
