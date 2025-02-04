@@ -11,6 +11,7 @@ INTAKE_VELOCITY = 100
 INTAKE_TORQUE = 100
 DRIVETRAIN_VELOCITY = 100
 DRIVETRAIN_TORQUE = 100
+DRIVETRAIN_TURN_VELOCITY = 45
 CATAPULT_VELOCITY = 100
 CATAPULT_TORQUE = 100
 CONVEYOR_VELOCITY = 100
@@ -31,8 +32,8 @@ INTAKE_PORT = Ports.PORT4
 CONVEYER_R_PORT = Ports.PORT5
 OPTICAL_SENSOR_PORT = Ports.PORT6
 CATAPULT_SENSOR_PORT = Ports.PORT8
-DRIVETRAIN_R_PORT = Ports.PORT9
-DRIVETRAIN_L_PORT = Ports.PORT10
+DRIVETRAIN_L_PORT = Ports.PORT9
+DRIVETRAIN_R_PORT = Ports.PORT10
 DISTANCE_SENSOR_PORT = Ports.PORT11
 
 # Brain should be defined by default
@@ -55,10 +56,10 @@ catapult_sensor = Bumper(CATAPULT_SENSOR_PORT)
 optical_sensor = Optical(OPTICAL_SENSOR_PORT)
 
 # set up drivetrain
-left_drive_smart = Motor(DRIVETRAIN_L_PORT, 1.0, True)
-right_drive_smart = Motor(DRIVETRAIN_R_PORT, 1.0, False)
+left_drive_smart = Motor(DRIVETRAIN_L_PORT, 1.0, False)
+right_drive_smart = Motor(DRIVETRAIN_R_PORT, 1.0, True)
 brain_inertial = Inertial()
-drivetrain = SmartDrive(left_drive_smart, right_drive_smart, brain_inertial, 250)
+drivetrain = SmartDrive(lm=left_drive_smart, rm=right_drive_smart, g=brain_inertial, wheelBase=200, externalGearRatio=2)
 
 
 # generating and setting random seed
@@ -98,6 +99,8 @@ def when_started():
     catapult_motor.set_max_torque(CATAPULT_TORQUE, PERCENT)
     catapult_motor.set_velocity(CATAPULT_VELOCITY, PERCENT)
     catapult_motor.set_stopping(HOLD)
+    drivetrain.set_turn_velocity(DRIVETRAIN_TURN_VELOCITY, PERCENT)
+    drivetrain.set_drive_velocity(DRIVETRAIN_VELOCITY, PERCENT)
 
 def conveyor_load():
     global conveyor, conveyor_state
@@ -167,73 +170,37 @@ def calibrate_drivetrain():
 drivetrain_l_needs_to_be_stopped_controller = False
 drivetrain_r_needs_to_be_stopped_controller = False
 
-# define a task that will handle monitoring inputs from controller
-def rc_auto_loop_function_controller():
-    global drivetrain_l_needs_to_be_stopped_controller, drivetrain_r_needs_to_be_stopped_controller, remote_control_code_enabled
-    # process the controller input every 20 milliseconds
-    # update the motors based on the input values
-    while True:
-        if remote_control_code_enabled:
-            
-            # calculate the drivetrain motor velocities from the controller joystick axies
-            # left = axisA
-            # right = axisD
-            drivetrain_left_side_speed = controller.axisA.position()
-            drivetrain_right_side_speed = controller.axisD.position()
-            
-            # check if the value is inside of the deadband range
-            if drivetrain_left_side_speed < 5 and drivetrain_left_side_speed > -5:
-                # check if the left motor has already been stopped
-                if drivetrain_l_needs_to_be_stopped_controller:
-                    # stop the left drive motor
-                    left_drive_smart.stop()
-                    # tell the code that the left motor has been stopped
-                    drivetrain_l_needs_to_be_stopped_controller = False
-            else:
-                # reset the toggle so that the deadband code knows to stop the left motor next
-                # time the input is in the deadband range
-                drivetrain_l_needs_to_be_stopped_controller = True
-            # check if the value is inside of the deadband range
-            if drivetrain_right_side_speed < 5 and drivetrain_right_side_speed > -5:
-                # check if the right motor has already been stopped
-                if drivetrain_r_needs_to_be_stopped_controller:
-                    # stop the right drive motor
-                    right_drive_smart.stop()
-                    # tell the code that the right motor has been stopped
-                    drivetrain_r_needs_to_be_stopped_controller = False
-            else:
-                # reset the toggle so that the deadband code knows to stop the right motor next
-                # time the input is in the deadband range
-                drivetrain_r_needs_to_be_stopped_controller = True
-            
-            # only tell the left drive motor to spin if the values are not in the deadband range
-            if drivetrain_l_needs_to_be_stopped_controller:
-                left_drive_smart.set_velocity(drivetrain_left_side_speed, PERCENT)
-                left_drive_smart.spin(FORWARD)
-            # only tell the right drive motor to spin if the values are not in the deadband range
-            if drivetrain_r_needs_to_be_stopped_controller:
-                right_drive_smart.set_velocity(drivetrain_right_side_speed, PERCENT)
-                right_drive_smart.spin(FORWARD)
-        # wait before repeating the process
-        wait(20, MSEC)
-
 # Calibrate the Drivetrain
 calibrate_drivetrain()
 
 ## End of the drivetrain code
 
+def auton_routine():
+    global drivetrain
+
+    intake_on_off()
+    wait(500, MSEC)
+    drivetrain.drive_for(REVERSE, 550, MM)
+    wait(1000, MSEC)
+    drivetrain.turn_for(LEFT, 80, DEGREES)
+    drivetrain.drive_for(REVERSE, 850, MM)
+    wait(500, MSEC)
+    catapult_button_on_off()
+    wait(1000, MSEC)
+    drivetrain.drive_for(FORWARD, 1100, MM)
+
+
 # system event handlers
 controller.buttonLUp.pressed(catapult_button_on_off)
 controller.buttonLDown.pressed(intake_on_off)
-controller.buttonRUp.pressed(conveyor_load)
+controller.buttonRUp.pressed(auton_routine)
 controller.buttonRDown.pressed(conveyor_unload)
 optical_sensor.object_detected(conveyor_hold)
 catapult_sensor.pressed(catapult_bumper_pressed)
 catapult_sensor.released(catapult_bumper_released)
 # add 15ms delay to make sure events are registered correctly.
 wait(15, MSEC)
-
+wait(750, MSEC)
 when_started()
 remote_control_code_enabled = True
-rc_auto_loop_thread_controller = Thread(rc_auto_loop_function_controller)
 
