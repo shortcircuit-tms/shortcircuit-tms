@@ -31,13 +31,13 @@ INTAKE_PORT = Ports.PORT4
 CONVEYER_R_PORT = Ports.PORT5
 OPTICAL_SENSOR_PORT = Ports.PORT6
 CATAPULT_SENSOR_PORT = Ports.PORT8
-DRIVETRAIN_R_PORT = Ports.PORT9
-DRIVETRAIN_L_PORT = Ports.PORT10
+DRIVETRAIN_L_PORT = Ports.PORT9
+DRIVETRAIN_R_PORT = Ports.PORT10
 DISTANCE_SENSOR_PORT = Ports.PORT11
 
 # Brain should be defined by default
 brain=Brain()
-brain.screen.print("SH_N3: Skills_Release\n")
+brain.screen.print("SH_N3: Skills\n")
 brain.screen.next_row()
 brain.screen.new_line()
 
@@ -53,13 +53,13 @@ intake_motor = Motor(INTAKE_PORT, True)
 catapult_motor = Motor(CATAPULT_PORT, False)
 catapult_sensor = Bumper(CATAPULT_SENSOR_PORT)
 optical_sensor = Optical(OPTICAL_SENSOR_PORT)
+front_distance = Distance(DISTANCE_SENSOR_PORT)
 
 # set up drivetrain
-left_drive_smart = Motor(DRIVETRAIN_L_PORT, 1.0, True)
-right_drive_smart = Motor(DRIVETRAIN_R_PORT, 1.0, False)
+left_drive_smart = Motor(DRIVETRAIN_L_PORT, 1.0, False)
+right_drive_smart = Motor(DRIVETRAIN_R_PORT, 1.0, True)
 brain_inertial = Inertial()
-drivetrain = SmartDrive(left_drive_smart, right_drive_smart, brain_inertial, 250)
-
+drivetrain = SmartDrive(lm=left_drive_smart, rm=right_drive_smart, g=brain_inertial, wheelBase=200, externalGearRatio=2)
 
 # generating and setting random seed
 def initializeRandomSeed():
