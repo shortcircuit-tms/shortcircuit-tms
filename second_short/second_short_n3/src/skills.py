@@ -15,6 +15,7 @@ CATAPULT_VELOCITY = 100
 CATAPULT_TORQUE = 100
 CONVEYOR_VELOCITY = 100
 CONVEYOR_TORQUE = 100
+DRIVETRAIN_TURN_VELOCITY = 45
 
 CONVEYOR_INIT = 0
 CONVEYOR_UNLOADING = 1
@@ -98,6 +99,7 @@ def when_started():
     catapult_motor.set_max_torque(CATAPULT_TORQUE, PERCENT)
     catapult_motor.set_velocity(CATAPULT_VELOCITY, PERCENT)
     catapult_motor.set_stopping(HOLD)
+    drivetrain.set_turn_velocity(DRIVETRAIN_TURN_VELOCITY, PERCENT)
 
 def conveyor_load():
     global conveyor, conveyor_state
