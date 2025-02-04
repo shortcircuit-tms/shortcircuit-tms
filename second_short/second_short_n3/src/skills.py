@@ -11,16 +11,17 @@ INTAKE_VELOCITY = 100
 INTAKE_TORQUE = 100
 DRIVETRAIN_VELOCITY = 100
 DRIVETRAIN_TORQUE = 100
+DRIVETRAIN_TURN_VELOCITY = 45
 CATAPULT_VELOCITY = 100
 CATAPULT_TORQUE = 100
 CONVEYOR_VELOCITY = 100
 CONVEYOR_TORQUE = 100
-DRIVETRAIN_TURN_VELOCITY = 45
 
 CONVEYOR_INIT = 0
 CONVEYOR_UNLOADING = 1
-CONVEYOR_LOADING = 2
-CONVEYOR_LOADED = 3
+CONVEYOR_UNLOADED = 2
+CONVEYOR_LOADING = 3
+CONVEYOR_LOADED = 4
 
 # Port configurations
 # All L(left) R(right) directions are defined from viewpoint
@@ -38,7 +39,7 @@ DISTANCE_SENSOR_PORT = Ports.PORT11
 
 # Brain should be defined by default
 brain=Brain()
-brain.screen.print("SH_N3: Skills\n")
+brain.screen.print("SH_N3: Skills released\n")
 brain.screen.next_row()
 brain.screen.new_line()
 
@@ -82,6 +83,7 @@ conveyer_state = CONVEYOR_INIT
 is_intake_on = False
 is_catapult_loaded = True
 is_catapult_on = False
+at_the_goal = False
 
 def when_started():
     global conveyor_state, conveyor
@@ -103,7 +105,7 @@ def when_started():
 
 def conveyor_load():
     global conveyor, conveyor_state
-    if conveyor_state == CONVEYOR_INIT or conveyor_state == CONVEYOR_UNLOADING:
+    if conveyor_state == CONVEYOR_INIT or conveyor_state == CONVEYOR_UNLOADED or conveyor_state == CONVEYOR_UNLOADING:
         conveyor.spin(FORWARD)
         conveyor_state = CONVEYOR_LOADING
 
@@ -120,13 +122,30 @@ def conveyor_hold():
         conveyor_state = CONVEYOR_LOADED       
 
 def catapult_button_on_off():
-    global is_catapult_on, catapult_motor
+    global is_catapult_on, catapult_motor, at_the_goal
+    # this is just to stop catapult midway
     if is_catapult_on:
         catapult_motor.stop()
         is_catapult_on = False
     else:
         catapult_motor.spin(FORWARD)
         is_catapult_on = True
+        if front_distance.object_distance() < 30:
+            at_the_goal = True
+
+def ball_passed_through_conveyor():
+    global at_the_goal
+    if front_distance.object_distance() < 30:
+        at_the_goal = True
+
+def away_from_goal():
+    global at_the_goal, conveyor_state
+    while True:
+        if front_distance.object_distance() > 200 and at_the_goal:
+            at_the_goal = False
+            conveyor_state = CONVEYOR_UNLOADED
+            conveyor.stop()
+        wait(50, MSEC)
 
 def catapult_bumper_pressed():
     global is_catapult_loaded, catapult_motor, is_catapult_on
@@ -232,10 +251,12 @@ controller.buttonRDown.pressed(conveyor_unload)
 optical_sensor.object_detected(conveyor_hold)
 catapult_sensor.pressed(catapult_bumper_pressed)
 catapult_sensor.released(catapult_bumper_released)
+optical_sensor.object_lost(ball_passed_through_conveyor)
 # add 15ms delay to make sure events are registered correctly.
 wait(15, MSEC)
 
 when_started()
 remote_control_code_enabled = True
 rc_auto_loop_thread_controller = Thread(rc_auto_loop_function_controller)
+away_from_goal_thread = Thread(away_from_goal)
 
