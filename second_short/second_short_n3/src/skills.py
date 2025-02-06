@@ -25,6 +25,10 @@ FROM_GOAL_X_DISTANCE  = 1450
 FROM_GOAL_X_ANGLE = 30
 FROM_GOAL_I_DISTANCE = 1450
 FROM_GOAL_MOVE_BACK = 250
+X_PATH_VELOCITY_HIGH = 100
+X_PATH_VELOCITY_LOW = 60
+I_PATH_VELOCITY_HIGH = 100
+I_PATH_VELOCITY_LOW = 97
 
 CONVEYOR_INIT = 0
 CONVEYOR_UNLOADING = 1
@@ -50,7 +54,7 @@ LEFT_DISTANCE_SENSOR_PORT = Ports.PORT12
 
 # Brain should be defined by default
 brain=Brain()
-brain.screen.print("SH_N3: Skills released\n")
+brain.screen.print("SH_N3: Skills\n")
 brain.screen.next_row()
 brain.screen.new_line()
 
@@ -203,63 +207,58 @@ def intake_on_off():
         is_intake_on = True
 
 def go_to_left_back_q():
-    global at_the_right_goal, at_the_right_goal
+    global at_the_right_goal, at_the_left_goal
 
     if at_the_left_goal == True:
-        drivetrain.drive_for(direction=FORWARD, 
-                             distance=FROM_GOAL_I_DISTANCE, 
-                             units=MM,
-                             velocity=100,
-                             units_v=PERCENT)
+        left_drive_smart.spin(FORWARD, I_PATH_VELOCITY_HIGH)
+        right_drive_smart.spin(FORWARD, I_PATH_VELOCITY_LOW)
+        wait(1600, MSEC)
+        left_drive_smart.stop()
+        right_drive_smart.stop()
+        
 
     elif at_the_right_goal == True:
-        drivetrain.drive_for(direction=FORWARD, 
-                             distance=FROM_GOAL_MOVE_BACK, 
-                             units=MM,
-                             velocity=100,
-                             units_v=PERCENT,
-                             wait=True)
-        drivetrain.turn_for(direction=RIGHT, 
-                            angle=FROM_GOAL_X_ANGLE, 
-                            units=DEGREES,
-                            velocity=30,
-                            units_v=PERCENT,
-                            wait=True)
-        drivetrain.drive_for(direction=FORWARD, 
-                             distance=FROM_GOAL_X_DISTANCE, 
-                             units=MM,
-                             velocity=100,
-                             units_v=PERCENT)
+        left_drive_smart.spin(FORWARD, X_PATH_VELOCITY_HIGH)
+        right_drive_smart.spin(FORWARD, X_PATH_VELOCITY_LOW)
+        wait(900, MSEC)
+        left_drive_smart.spin(FORWARD, X_PATH_VELOCITY_HIGH)
+        right_drive_smart.spin(FORWARD, X_PATH_VELOCITY_HIGH)
+        wait(1000, MSEC)
+        left_drive_smart.spin(FORWARD, X_PATH_VELOCITY_LOW)
+        right_drive_smart.spin(FORWARD, X_PATH_VELOCITY_HIGH)
+        wait(200, MSEC)
+        left_drive_smart.spin(FORWARD, X_PATH_VELOCITY_LOW)
+        right_drive_smart.spin(FORWARD, X_PATH_VELOCITY_LOW)
+        wait(100, MSEC)
+        left_drive_smart.stop()
+        right_drive_smart.stop()
 
 def go_to_right_back_q():
-    global at_the_right_goal, at_the_right_goal
+    global at_the_right_goal, at_the_left_goal
 
     if at_the_right_goal == True:
-        drivetrain.drive_for(direction=FORWARD, 
-                             distance=FROM_GOAL_I_DISTANCE, 
-                             units=MM,
-                             velocity=100,
-                             units_v=PERCENT)
+        left_drive_smart.spin(FORWARD, I_PATH_VELOCITY_LOW)
+        right_drive_smart.spin(FORWARD, I_PATH_VELOCITY_HIGH)
+        wait(1600, MSEC)
+        left_drive_smart.stop()
+        right_drive_smart.stop() 
 
-    elif at_the_left_goal == True:
-        drivetrain.drive_for(direction=FORWARD, 
-                             distance=FROM_GOAL_MOVE_BACK, 
-                             units=MM,
-                             velocity=100,
-                             units_v=PERCENT,
-                             wait=True)
-        drivetrain.turn_for(direction=LEFT, 
-                            angle=FROM_GOAL_X_ANGLE, 
-                            units=DEGREES,
-                            velocity=30,
-                            units_v=PERCENT,
-                            wait=True)
-        drivetrain.drive_for(direction=FORWARD, 
-                             distance=FROM_GOAL_X_DISTANCE, 
-                             units=MM,
-                             velocity=100,
-                             units_v=PERCENT)
-      
+    else:
+        left_drive_smart.spin(FORWARD, X_PATH_VELOCITY_LOW)
+        right_drive_smart.spin(FORWARD, X_PATH_VELOCITY_HIGH)
+        wait(900, MSEC)
+        left_drive_smart.spin(FORWARD, X_PATH_VELOCITY_HIGH)
+        right_drive_smart.spin(FORWARD, X_PATH_VELOCITY_HIGH)
+        wait(1000, MSEC)
+        left_drive_smart.spin(FORWARD, X_PATH_VELOCITY_HIGH)
+        right_drive_smart.spin(FORWARD, X_PATH_VELOCITY_LOW)
+        wait(200, MSEC)
+        left_drive_smart.spin(FORWARD, X_PATH_VELOCITY_LOW)
+        right_drive_smart.spin(FORWARD, X_PATH_VELOCITY_LOW)
+        wait(100, MSEC)
+        left_drive_smart.stop()
+        right_drive_smart.stop()
+         
  
 ## Strat of drivetrain code that was derived from VEX IQ
 ## Do not touch this code unless you know what you are doing
