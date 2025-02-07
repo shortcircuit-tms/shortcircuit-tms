@@ -56,10 +56,10 @@ catapult_sensor = Bumper(CATAPULT_SENSOR_PORT)
 optical_sensor = Optical(OPTICAL_SENSOR_PORT)
 
 # set up drivetrain
-left_drive_smart = Motor(DRIVETRAIN_L_PORT, 1.0, False)
-right_drive_smart = Motor(DRIVETRAIN_R_PORT, 1.0, True)
+left_drive_smart = Motor(DRIVETRAIN_L_PORT, 1, False)
+right_drive_smart = Motor(DRIVETRAIN_R_PORT, 1, True)
 brain_inertial = Inertial()
-drivetrain = SmartDrive(lm=left_drive_smart, rm=right_drive_smart, g=brain_inertial, wheelBase=200, externalGearRatio=2)
+drivetrain = SmartDrive(lm=left_drive_smart, rm=right_drive_smart, g=brain_inertial, wheelTravel=200, trackWidth=200, wheelBase=200, externalGearRatio=2)
 
 
 # generating and setting random seed
@@ -80,13 +80,16 @@ myVariable = 0
 launcher_speed = 0
 conveyer_state = CONVEYOR_INIT 
 is_intake_on = False
-is_catapult_loaded = True
+is_catapult_loaded = False
 is_catapult_on = False
+start_auton = False
+stop_auton = False
 
 def when_started():
     global conveyor_state, conveyor
     global is_intake_on, intake_motor
     global is_catapult_on, catapult_motor, is_catapult_loaded
+    global start_auton, stop_auton
 
     conveyor_state = CONVEYOR_INIT
     conveyor.set_max_torque(CONVEYOR_TORQUE, PERCENT)
@@ -95,12 +98,20 @@ def when_started():
     intake_motor.set_max_torque(INTAKE_TORQUE, PERCENT)
     intake_motor.set_velocity(INTAKE_VELOCITY, PERCENT)
     is_catapult_on = False
-    is_catapult_loaded = True
+    is_catapult_loaded = False
     catapult_motor.set_max_torque(CATAPULT_TORQUE, PERCENT)
     catapult_motor.set_velocity(CATAPULT_VELOCITY, PERCENT)
     catapult_motor.set_stopping(HOLD)
     drivetrain.set_turn_velocity(DRIVETRAIN_TURN_VELOCITY, PERCENT)
     drivetrain.set_drive_velocity(DRIVETRAIN_VELOCITY, PERCENT)
+    start_auton = False
+    stop_auton = False
+    if not is_catapult_loaded:
+        catapult_button_on_off()
+    wait(2000, MSEC)
+    intake_motor.spin(FORWARD)
+    wait(5000, MSEC)
+    intake_motor.stop()
 
 def conveyor_load():
     global conveyor, conveyor_state
@@ -148,6 +159,9 @@ def intake_on_off():
         intake_motor.spin(FORWARD)
         is_intake_on = True
 
+def set_start_auton():
+    global start_auton
+    start_auton = True
 
 ## Strat of drivetrain code that was derived from VEX IQ
 ## Do not touch this code unless you know what you are doing
@@ -166,6 +180,7 @@ def calibrate_drivetrain():
     brain.screen.clear_screen()
     brain.screen.set_cursor(1, 1)
 
+
 # define variables used for controlling motors based on controller inputs
 drivetrain_l_needs_to_be_stopped_controller = False
 drivetrain_r_needs_to_be_stopped_controller = False
@@ -178,29 +193,58 @@ calibrate_drivetrain()
 def auton_routine():
     global drivetrain
 
-    intake_on_off()
+    drivetrain.drive_for(direction=REVERSE,
+                         distance=12,
+                         units=INCHES,
+                         velocity=100,
+                         units_v=PERCENT,
+                         wait=True)
     wait(500, MSEC)
-    drivetrain.drive_for(REVERSE, 550, MM)
+    drivetrain.turn_for(direction=LEFT,
+                        angle=85,
+                        units=DEGREES,
+                        velocity=30,
+                        units_v=PERCENT,
+                        wait=True)
+    wait(200, MSEC)
+    drivetrain.drive_for(direction=REVERSE,
+                         distance=26,
+                         units=INCHES,
+                         velocity=100,
+                         units_v=PERCENT,
+                         wait=True)
     wait(1000, MSEC)
-    drivetrain.turn_for(LEFT, 80, DEGREES)
-    drivetrain.drive_for(REVERSE, 850, MM)
-    wait(500, MSEC)
-    catapult_button_on_off()
-    wait(1000, MSEC)
-    drivetrain.drive_for(FORWARD, 1100, MM)
+    #catapult_button_on_off()
+    #left_drive_smart.spin(FORWARD)
+    #right_drive_smart.spin(FORWARD)
+    #wait(1750, MSEC)
+    #left_drive_smart.stop()
+    #right_drive_smart.stop()
+    #intake_on_off()
+    #conveyor_load()
+    #wait(1000, MSEC)
+    #intake_on_off()
+    #left_drive_smart.spin(REVERSE)
+    #right_drive_smart.spin(REVERSE)
+    #wait(2750, MSEC)
+    #left_drive_smart.stop()
+    #right_drive_smart.stop()
+    #conveyor_unload()
+    
 
 
 # system event handlers
-controller.buttonLUp.pressed(catapult_button_on_off)
-controller.buttonLDown.pressed(intake_on_off)
-controller.buttonRUp.pressed(auton_routine)
-controller.buttonRDown.pressed(conveyor_unload)
+brain.buttonLeft.pressed(set_start_auton)
 optical_sensor.object_detected(conveyor_hold)
 catapult_sensor.pressed(catapult_bumper_pressed)
 catapult_sensor.released(catapult_bumper_released)
 # add 15ms delay to make sure events are registered correctly.
-wait(15, MSEC)
 wait(750, MSEC)
 when_started()
-remote_control_code_enabled = True
+
+while not start_auton:
+    wait(10, MSEC)
+
+auton_routine()
+
 
