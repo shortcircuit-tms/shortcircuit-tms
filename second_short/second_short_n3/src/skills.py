@@ -98,11 +98,12 @@ myVariable = 0
 launcher_speed = 0
 conveyer_state = CONVEYOR_INIT 
 is_intake_on = False
-is_catapult_loaded = True
+is_catapult_loaded = False
 is_catapult_on = False
 at_the_goal = False
 at_the_right_goal = False
 at_the_left_goal = False
+is_match_started = False
 #If value is true, it's on the left, and if it's false, it's on the right
 
 def when_started():
@@ -120,7 +121,7 @@ def when_started():
     intake_motor.set_max_torque(INTAKE_TORQUE, PERCENT)
     intake_motor.set_velocity(INTAKE_VELOCITY, PERCENT)
     is_catapult_on = False
-    is_catapult_loaded = True
+    is_catapult_loaded = False
     catapult_motor.set_max_torque(CATAPULT_TORQUE, PERCENT)
     catapult_motor.set_velocity(CATAPULT_VELOCITY, PERCENT)
     catapult_motor.set_stopping(HOLD)
@@ -128,6 +129,13 @@ def when_started():
     at_the_goal = False
     at_the_right_goal = False
     at_the_left_goal = False
+    if not is_catapult_loaded:
+        catapult_motor.spin(FORWARD)
+        is_catapult_on = True
+    wait(2000, MSEC)
+    intake_motor.spin(FORWARD)
+    wait(5000, MSEC)
+    intake_motor.stop()
 
 
 def conveyor_load():
@@ -138,7 +146,7 @@ def conveyor_load():
 
 def conveyor_unload():
     global conveyor, conveyor_state
-    if  conveyor_state == CONVEYOR_LOADED:
+    if front_distance.object_distance() < AT_THE_GOAL_FRONT_S_DIST_TH:
         conveyor.spin(FORWARD)
         conveyor_state = CONVEYOR_UNLOADING
 
@@ -148,23 +156,20 @@ def conveyor_hold():
         conveyor.stop()
         conveyor_state = CONVEYOR_LOADED       
 
-def catapult_button_on_off():
+def catapult_unload():
     global is_catapult_on, catapult_motor, at_the_goal
     global at_the_right_goal, at_the_left_goal
 
-    # this is just to stop catapult midway
-    if is_catapult_on:
-        catapult_motor.stop()
-        is_catapult_on = False
-    else:
+    if front_distance.object_distance() < AT_THE_GOAL_FRONT_S_DIST_TH:
         catapult_motor.spin(FORWARD)
         is_catapult_on = True
-        if front_distance.object_distance() < AT_THE_GOAL_FRONT_S_DIST_TH:
-            at_the_goal = True
-            if left_distance.object_distance() < AT_THE_GOAL_LEFT_S_DIST_TH:
-                at_the_left_goal = True
-            else:
-                at_the_right_goal = True
+        at_the_goal = True
+        if left_distance.object_distance() < AT_THE_GOAL_LEFT_S_DIST_TH:
+            at_the_left_goal = True
+        else:
+            at_the_right_goal = True
+        wait(1000, MSEC)
+        conveyor_unload()
 
 def ball_passed_through_conveyor():
     global at_the_goal, at_the_right_goal, at_the_left_goal
@@ -175,7 +180,6 @@ def ball_passed_through_conveyor():
         else:
             at_the_right_goal = True
 
-
 def away_from_goal():
     global at_the_goal, conveyor_state, at_the_right_goal, at_the_left_goal
     while True:
@@ -183,9 +187,7 @@ def away_from_goal():
             at_the_goal = False
             at_the_left_goal = False
             at_the_right_goal = False
-            conveyor_state = CONVEYOR_UNLOADED
-            conveyor.stop()
-        wait(50, MSEC)
+            conveyor_state = CONVEYOR_LOADING
 
 def catapult_bumper_pressed():
     global is_catapult_loaded, catapult_motor, is_catapult_on
@@ -205,6 +207,26 @@ def intake_on_off():
     else:
         intake_motor.spin(FORWARD)
         is_intake_on = True
+
+def init_go_to_goal():
+    left_drive_smart.spin(FORWARD, 100)
+    right_drive_smart.spin(FORWARD, 100)
+    wait(550, MSEC)
+    left_drive_smart.stop()
+    right_drive_smart.stop()
+    wait(500, MSEC)
+    drivetrain.turn_for(direction=RIGHT,
+                        angle=85,
+                        units=DEGREES,
+                        velocity=30,
+                        units_v=PERCENT,
+                        wait=True)
+    wait(200, MSEC)
+    left_drive_smart.spin(REVERSE, 100)
+    right_drive_smart.spin(REVERSE, 100)
+    wait(900, MSEC)
+    left_drive_smart.stop()
+    right_drive_smart.stop()
 
 def go_to_left_back_q():
     global at_the_right_goal, at_the_left_goal
@@ -232,6 +254,9 @@ def go_to_left_back_q():
         wait(100, MSEC)
         left_drive_smart.stop()
         right_drive_smart.stop()
+    
+    drivetrain.set_turn_velocity(DRIVETRAIN_TURN_VELOCITY, PERCENT)
+
 
 def go_to_right_back_q():
     global at_the_right_goal, at_the_left_goal
@@ -258,7 +283,10 @@ def go_to_right_back_q():
         wait(100, MSEC)
         left_drive_smart.stop()
         right_drive_smart.stop()
-         
+    
+    drivetrain.set_turn_velocity(DRIVETRAIN_TURN_VELOCITY, PERCENT)
+
+        
  
 ## Strat of drivetrain code that was derived from VEX IQ
 ## Do not touch this code unless you know what you are doing
@@ -282,8 +310,10 @@ drivetrain_l_needs_to_be_stopped_controller = False
 drivetrain_r_needs_to_be_stopped_controller = False
 
 # define a task that will handle monitoring inputs from controller
+remote_control_code_enabled = False
 def rc_auto_loop_function_controller():
     global drivetrain_l_needs_to_be_stopped_controller, drivetrain_r_needs_to_be_stopped_controller, remote_control_code_enabled
+    global is_match_started
     # process the controller input every 20 milliseconds
     # update the motors based on the input values
     while True:
@@ -331,27 +361,46 @@ def rc_auto_loop_function_controller():
         # wait before repeating the process
         wait(20, MSEC)
 
+def skills_main_loop():
+    global is_match_started
+    global remote_control_code_enabled
+    is_match_started = True
+    remote_control_code_enabled = True
+    intake_motor.spin(FORWARD)
+    rc_auto_loop_thread_controller = Thread(rc_auto_loop_function_controller)
+    away_from_goal_thread = Thread(away_from_goal)
+    init_go_to_goal()
+
 # Calibrate the Drivetrain
 calibrate_drivetrain()
 
 ## End of the drivetrain code
 
 # system event handlers
-controller.buttonLUp.pressed(catapult_button_on_off)
-controller.buttonLDown.pressed(intake_on_off)
-controller.buttonRUp.pressed(conveyor_load)
-controller.buttonRDown.pressed(conveyor_unload)
+controller.buttonLUp.pressed(catapult_unload)
+#controller.buttonLDown.pressed()
+controller.buttonRUp.pressed(conveyor_unload)
+#controller.buttonRDown.pressed()
 controller.buttonEUp.pressed(go_to_left_back_q)
 controller.buttonEDown.pressed(go_to_right_back_q)
 optical_sensor.object_detected(conveyor_hold)
 catapult_sensor.pressed(catapult_bumper_pressed)
 catapult_sensor.released(catapult_bumper_released)
 optical_sensor.object_lost(ball_passed_through_conveyor)
+controller.buttonL3.pressed(skills_main_loop)
 # add 15ms delay to make sure events are registered correctly.
 wait(15, MSEC)
 
 when_started()
-remote_control_code_enabled = True
-rc_auto_loop_thread_controller = Thread(rc_auto_loop_function_controller)
-away_from_goal_thread = Thread(away_from_goal)
+
+if not is_match_started:
+    wait(20, MSEC)
+
+wait(60, SECONDS)
+
+remote_control_code_enabled = False
+drivetrain.stop()
+intake_motor.stop()
+conveyor.stop()
+catapult_motor.stop()
 
