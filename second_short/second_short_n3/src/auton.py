@@ -22,6 +22,22 @@ CONVEYOR_UNLOADING = 1
 CONVEYOR_LOADING = 2
 CONVEYOR_LOADED = 3
 
+BALL_PICKUP_ZONE_DISTANCE = 25
+BALL_PICKUP_LOAD_DISTACE = 18
+BALL_PICKUP_ZONE_VELOCITY = 100
+BALL_PICKUP_LOAD_VELOCITY = 30
+RETURN_TO_I_GOAL_DISTANCE = 41
+RETURN_TO_I_GOAL_VELOCITY = 100
+ADJUST_TO_GOAL_DISTANCE = 4
+ADJUST_TO_GOAL_VELOCITY = 30
+X_GOAL_ANGLE = 30
+RETURN_TO_X_GOAL_VELOCITY = 100
+RETURN_TO_X_GOAL_DISTANCE = 43
+
+CONVEYOR_TOP_UNLOAD = 1500
+CONVEYOR_BOTTOM_UNLOAD = 2500
+CATAPULT_WAIT_TIME = 1000
+
 # Port configurations
 # All L(left) R(right) directions are defined from viewpoint
 # looking from behind the bot towards the flyweel
@@ -159,6 +175,80 @@ def intake_on_off():
         intake_motor.spin(FORWARD)
         is_intake_on = True
 
+def go_back_and_load():
+    drivetrain.drive_for(direction=FORWARD,
+                         distance=BALL_PICKUP_ZONE_DISTANCE,
+                         units=INCHES,
+                         velocity=BALL_PICKUP_ZONE_VELOCITY,
+                         units_v=PERCENT,
+                         wait=True)
+    conveyor_load()
+    drivetrain.drive_for(direction=FORWARD,
+                         distance=BALL_PICKUP_LOAD_DISTACE,
+                         units=INCHES,
+                         velocity=BALL_PICKUP_LOAD_VELOCITY,
+                         units_v=PERCENT,
+                         wait=True)
+    
+def go_to_i_goal():
+    drivetrain.drive_for(direction=REVERSE,
+                         distance=RETURN_TO_I_GOAL_DISTANCE,
+                         units=INCHES,
+                         velocity=RETURN_TO_I_GOAL_VELOCITY,
+                         units_v=PERCENT,
+                         wait=True)
+    drivetrain.drive_for(direction=REVERSE,
+                         distance=ADJUST_TO_GOAL_DISTANCE,
+                         units=INCHES,
+                         velocity=ADJUST_TO_GOAL_VELOCITY,
+                         units_v=PERCENT,
+                         wait=True)
+
+def go_to_x_goal():
+    drivetrain.turn_for(direction=RIGHT,
+                        angle=X_GOAL_ANGLE,
+                        units=DEGREES)
+    drivetrain.drive_for(direction=REVERSE,
+                         distance=RETURN_TO_X_GOAL_DISTANCE,
+                         units=INCHES,
+                         velocity=RETURN_TO_X_GOAL_VELOCITY,
+                         units_v=PERCENT,
+                         wait=True)
+    drivetrain.turn_for(direction=LEFT,
+                        angle=X_GOAL_ANGLE,
+                        units=DEGREES)
+    drivetrain.drive_for(direction=REVERSE,
+                         distance=ADJUST_TO_GOAL_DISTANCE,
+                         units=INCHES,
+                         velocity=ADJUST_TO_GOAL_VELOCITY,
+                         units_v=PERCENT,
+                         wait=True)
+    
+    
+def unload_bot_with_catapult():
+    wait(CATAPULT_WAIT_TIME, MSEC)
+    catapult_button_on_off()
+    wait(25, MSEC)
+    conveyor_unload()
+    wait(CONVEYOR_TOP_UNLOAD, MSEC)
+
+def unload_bot_with_conveyor():
+    conveyor_unload()
+    wait(CONVEYOR_BOTTOM_UNLOAD, MSEC)
+
+def fetch_and_unload(x_goal=False, use_catapult=False):
+    go_back_and_load()
+    
+    if x_goal:
+        go_to_x_goal()
+    else:
+        go_to_i_goal()
+
+    if use_catapult:
+        unload_bot_with_catapult()
+    else:
+        unload_bot_with_conveyor()
+
 def set_start_auton():
     global start_auton
     start_auton = True
@@ -213,24 +303,14 @@ def auton_routine():
                          velocity=100,
                          units_v=PERCENT,
                          wait=True)
-    wait(1000, MSEC)
-    #catapult_button_on_off()
-    #left_drive_smart.spin(FORWARD)
-    #right_drive_smart.spin(FORWARD)
-    #wait(1750, MSEC)
-    #left_drive_smart.stop()
-    #right_drive_smart.stop()
-    #intake_on_off()
-    #conveyor_load()
-    #wait(1000, MSEC)
-    #intake_on_off()
-    #left_drive_smart.spin(REVERSE)
-    #right_drive_smart.spin(REVERSE)
-    #wait(2750, MSEC)
-    #left_drive_smart.stop()
-    #right_drive_smart.stop()
-    #conveyor_unload()
-    
+    wait(CATAPULT_WAIT_TIME, MSEC)
+    catapult_button_on_off()
+    fetch_and_unload(x_goal=False, use_catapult=True)
+    fetch_and_unload(x_goal=True, use_catapult=True)
+    fetch_and_unload(x_goal=False, use_catapult=True)
+    while not stop_auton:
+        fetch_and_unload(x_goal=False, use_catapult=False)
+
 
 
 # system event handlers
@@ -246,5 +326,13 @@ while not start_auton:
     wait(10, MSEC)
 
 auton_routine()
+#auton_thread = Thread(auton_routine)
 
+#wait(600000, MSEC)
+#stop_auto = True
+
+drivetrain.stop()
+conveyor.stop()
+catapult_motor.stop()
+intake_motor.stop()
 
