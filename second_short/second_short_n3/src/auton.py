@@ -26,21 +26,21 @@ DRIVE_MAX_VELOCITY = 100
 START_BACKUP_DIST = 16
 START_TO_I_GOAL_DIST = 24
 START_TURN_ANGLE = 85
-BALL_PICKUP_ZONE_DISTANCE = 30
+BALL_PICKUP_ZONE_DISTANCE = 28
 BALL_PICKUP_ZONE_VELOCITY = 100
-BALL_PICKUP_LOAD_DISTACE = 16
+BALL_PICKUP_LOAD_DISTACE = 14
 BALL_PICKUP_LOAD_VELOCITY = 40
-RETURN_TO_I_GOAL_DISTANCE = 41
+RETURN_TO_I_GOAL_DISTANCE = BALL_PICKUP_ZONE_DISTANCE + BALL_PICKUP_LOAD_DISTACE + 4
 RETURN_TO_I_GOAL_VELOCITY = 100
 ADJUST_TO_GOAL_TIME_1 = 500
 ADJUST_TO_GOAL_TIME_2 = 300
 ADJUST_TO_GOAL_VELOCITY = 50
-X_GOAL_ANGLE = 30
+X_GOAL_ANGLE = 40
 RETURN_TO_X_GOAL_VELOCITY = 100
-RETURN_TO_X_GOAL_DISTANCE = 43
+RETURN_TO_X_GOAL_DISTANCE = 40
 
-CONVEYOR_TOP_UNLOAD = 1500
-CONVEYOR_BOTTOM_UNLOAD = 2500
+CONVEYOR_TOP_UNLOAD_TIME = 1500
+CONVEYOR_BOTTOM_UNLOAD_TIME = 2000
 CATAPULT_WAIT_TIME = 1000
 
 # Port configurations
@@ -277,18 +277,24 @@ def go_to_x_goal():
     drivetrain.turn_for(direction=LEFT,
                         angle=X_GOAL_ANGLE,
                         units=DEGREES)
+    wait(500, MSEC)
+    drive_staight(direction=REVERSE, 
+                  distance=16, 
+                  velocity=RETURN_TO_X_GOAL_VELOCITY, 
+                  use_smart_drive = False,
+                  do_wait=True)
     adjust_to_goal()
 
 def unload_bot_with_catapult():
     wait(CATAPULT_WAIT_TIME, MSEC)
     catapult_button_on_off()
-    wait(25, MSEC)
+    wait(1500, MSEC)
     conveyor_unload()
-    wait(CONVEYOR_TOP_UNLOAD, MSEC)
+    wait(CONVEYOR_TOP_UNLOAD_TIME, MSEC)
 
 def unload_bot_with_conveyor():
     conveyor_unload()
-    wait(CONVEYOR_BOTTOM_UNLOAD, MSEC)
+    wait(CONVEYOR_BOTTOM_UNLOAD_TIME, MSEC)
 
 def fetch_and_unload(x_goal=False, use_catapult=False):
     go_back_and_load()
@@ -338,34 +344,34 @@ def auton_routine():
     global drivetrain
 
     intake_motor.spin(FORWARD)
-    # drive_staight(direction=REVERSE, 
-    #               distance=START_BACKUP_DIST, 
-    #               velocity=DRIVE_MAX_VELOCITY, 
-    #               use_smart_drive = False,
-    #               do_wait=True)
-    # wait(500, MSEC)
-    # drivetrain.turn_for(direction=LEFT,
-    #                     angle=START_TURN_ANGLE,
-    #                     units=DEGREES,
-    #                     velocity=30,
-    #                     units_v=PERCENT,
-    #                     wait=True)
-    # wait(200, MSEC)
-    # drive_staight(direction=REVERSE, 
-    #               distance=START_TO_I_GOAL_DIST, 
-    #               velocity=DRIVE_MAX_VELOCITY, 
-    #               use_smart_drive = False,
-    #               do_wait=True)
-    # wait(200, MSEC)
-    # adjust_to_goal()
-    # wait(CATAPULT_WAIT_TIME, MSEC)
-
-    # catapult_button_on_off()
-    fetch_and_unload(x_goal=False, use_catapult=False)
-    #fetch_and_unload(x_goal=True, use_catapult=True)
-    #fetch_and_unload(x_goal=False, use_catapult=True)
-    #while not stop_auton:
-    #    fetch_and_unload(x_goal=False, use_catapult=False)
+    drive_staight(direction=REVERSE, 
+                  distance=START_BACKUP_DIST, 
+                  velocity=DRIVE_MAX_VELOCITY, 
+                  use_smart_drive = False,
+                  do_wait=True)
+    wait(500, MSEC)
+    drivetrain.turn_for(direction=LEFT,
+                        angle=START_TURN_ANGLE,
+                        units=DEGREES,
+                        velocity=30,
+                        units_v=PERCENT,
+                        wait=True)
+    wait(200, MSEC)
+    drive_staight(direction=REVERSE, 
+                  distance=START_TO_I_GOAL_DIST, 
+                  velocity=DRIVE_MAX_VELOCITY, 
+                  use_smart_drive = False,
+                  do_wait=True)
+    wait(200, MSEC)
+    adjust_to_goal()
+    wait(CATAPULT_WAIT_TIME, MSEC)
+    catapult_button_on_off()
+    wait(500, MSEC)
+    fetch_and_unload(x_goal=False, use_catapult=True)
+    fetch_and_unload(x_goal=True, use_catapult=True)
+    fetch_and_unload(x_goal=False, use_catapult=True)
+    while not stop_auton:
+        fetch_and_unload(x_goal=False, use_catapult=False)
 
 calib_velocity = 100
 def caliberate_distance():
