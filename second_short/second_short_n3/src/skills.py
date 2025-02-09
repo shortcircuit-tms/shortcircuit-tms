@@ -168,7 +168,7 @@ def catapult_unload():
             at_the_left_goal = True
         else:
             at_the_right_goal = True
-        wait(1000, MSEC)
+        wait(1750, MSEC)
         conveyor_unload()
 
 def ball_passed_through_conveyor():
@@ -387,7 +387,7 @@ optical_sensor.object_detected(conveyor_hold)
 catapult_sensor.pressed(catapult_bumper_pressed)
 catapult_sensor.released(catapult_bumper_released)
 optical_sensor.object_lost(ball_passed_through_conveyor)
-controller.buttonL3.pressed(skills_main_loop)
+controller.buttonLDown.pressed(skills_main_loop)
 # add 15ms delay to make sure events are registered correctly.
 wait(15, MSEC)
 
@@ -396,11 +396,11 @@ when_started()
 if not is_match_started:
     wait(20, MSEC)
 
-wait(60, SECONDS)
+# wait(60, SECONDS)
 
-remote_control_code_enabled = False
-drivetrain.stop()
-intake_motor.stop()
-conveyor.stop()
-catapult_motor.stop()
+# remote_control_code_enabled = False
+# drivetrain.stop()
+# intake_motor.stop()
+# conveyor.stop()
+# catapult_motor.stop()
 
