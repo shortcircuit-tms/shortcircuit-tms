@@ -9,4 +9,4 @@ git clean -fd
 git fetch origin
 git reset --hard origin/your-branch-name
 git pull
-```console
+```
