@@ -7,6 +7,6 @@
 git reset --hard HEAD
 git clean -fd
 git fetch origin
-git reset --hard origin/your-branch-name
+git reset --hard origin/main
 git pull
 ```
