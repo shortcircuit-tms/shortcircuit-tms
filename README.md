@@ -3,9 +3,10 @@
 1. Commit all your changes locally or undo them
 
 2. Follow these steps
-
+```console
 git reset --hard HEAD
 git clean -fd
 git fetch origin
 git reset --hard origin/your-branch-name
 git pull
+```console
