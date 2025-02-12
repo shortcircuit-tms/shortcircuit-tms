@@ -54,7 +54,7 @@ LEFT_DISTANCE_SENSOR_PORT = Ports.PORT12
 
 # Brain should be defined by default
 brain=Brain()
-brain.screen.print("SH_N3: Skills\n")
+brain.screen.print("SH_N3: Teamwork\n")
 brain.screen.next_row()
 brain.screen.new_line()
 
@@ -369,25 +369,30 @@ def skills_main_loop():
     intake_motor.spin(FORWARD)
     rc_auto_loop_thread_controller = Thread(rc_auto_loop_function_controller)
     away_from_goal_thread = Thread(away_from_goal)
-    #init_go_to_goal() 
 
 # Calibrate the Drivetrain
 calibrate_drivetrain()
 
 ## End of the drivetrain code
 
+def conveyor_unload_no_check():
+
+    global conveyor, conveyor_state
+    conveyor.spin(FORWARD)
+    conveyor_state  = CONVEYOR_LOADING
+
 # system event handlers
 controller.buttonLUp.pressed(catapult_unload)
+controller.buttonLDown.pressed(skills_main_loop)
 #controller.buttonLDown.pressed()
 controller.buttonRUp.pressed(conveyor_unload)
-#controller.buttonRDown.pressed()
+controller.buttonRDown.pressed(conveyor_unload_no_check)
 controller.buttonEUp.pressed(go_to_left_back_q)
 controller.buttonEDown.pressed(go_to_right_back_q)
 optical_sensor.object_detected(conveyor_hold)
 catapult_sensor.pressed(catapult_bumper_pressed)
 catapult_sensor.released(catapult_bumper_released)
 optical_sensor.object_lost(ball_passed_through_conveyor)
-controller.buttonLDown.pressed(skills_main_loop)
 # add 15ms delay to make sure events are registered correctly.
 wait(15, MSEC)
 
