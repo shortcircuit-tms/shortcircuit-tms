@@ -23,25 +23,26 @@ CONVEYOR_LOADING = 2
 CONVEYOR_LOADED = 3
 
 DRIVE_MAX_VELOCITY = 100
-START_BACKUP_DIST = 16
+START_BACKUP_DIST = 17
 START_TO_I_GOAL_DIST = 24
 START_TURN_ANGLE = 85
 BALL_PICKUP_ZONE_DISTANCE = 28
 BALL_PICKUP_ZONE_VELOCITY = 100
-BALL_PICKUP_LOAD_DISTACE = 14
+BALL_PICKUP_LOAD_DISTACE = 18
 BALL_PICKUP_LOAD_VELOCITY = 40
 RETURN_TO_I_GOAL_DISTANCE = BALL_PICKUP_ZONE_DISTANCE + BALL_PICKUP_LOAD_DISTACE + 4
 RETURN_TO_I_GOAL_VELOCITY = 100
 ADJUST_TO_GOAL_TIME_1 = 500
 ADJUST_TO_GOAL_TIME_2 = 300
-ADJUST_TO_GOAL_VELOCITY = 50
+ADJUST_TO_GOAL_VELOCITY = 85
 X_GOAL_ANGLE = 40
 RETURN_TO_X_GOAL_VELOCITY = 100
-RETURN_TO_X_GOAL_DISTANCE = 40
+RETURN_TO_X_GOAL_DISTANCE = 38.5
 
 CONVEYOR_TOP_UNLOAD_TIME = 1500
 CONVEYOR_BOTTOM_UNLOAD_TIME = 2000
 CATAPULT_WAIT_TIME = 1000
+LEFT_WHEEL_SCALE_DOWN = 0.965
 
 # Port configurations
 # All L(left) R(right) directions are defined from viewpoint
@@ -139,7 +140,7 @@ def drive_staight(direction, distance, velocity, use_smart_drive = False, do_wai
         if direction is FORWARD:
             corrected_distance = distance + 0.5
         driving_time = get_drive_time_for_distance(corrected_distance)
-        left_drive_smart.spin(direction, velocity)
+        left_drive_smart.spin(direction, velocity*LEFT_WHEEL_SCALE_DOWN)
         right_drive_smart.spin(direction, velocity)
         wait(int(driving_time), MSEC)
         left_drive_smart.stop()
@@ -254,6 +255,8 @@ def go_back_and_load():
                   velocity=BALL_PICKUP_LOAD_VELOCITY, 
                   use_smart_drive = True,
                   do_wait=True)
+    wait(750, MSEC)
+
     
 def go_to_i_goal():
     drive_staight(direction=REVERSE, 
