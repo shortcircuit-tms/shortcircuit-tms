@@ -354,22 +354,14 @@ def rc_auto_loop_function_controller():
             if drivetrain_l_needs_to_be_stopped_controller:
                 left_drive_smart.set_velocity(drivetrain_left_side_speed, PERCENT)
                 left_drive_smart.spin(FORWARD)
+                is_match_started = True
             # only tell the right drive motor to spin if the values are not in the deadband range
             if drivetrain_r_needs_to_be_stopped_controller:
                 right_drive_smart.set_velocity(drivetrain_right_side_speed, PERCENT)
                 right_drive_smart.spin(FORWARD)
+                is_match_started = True
         # wait before repeating the process
         wait(20, MSEC)
-
-def skills_main_loop():
-    global is_match_started
-    global remote_control_code_enabled
-    is_match_started = True
-    remote_control_code_enabled = True
-    intake_motor.spin(FORWARD)
-    rc_auto_loop_thread_controller = Thread(rc_auto_loop_function_controller)
-    away_from_goal_thread = Thread(away_from_goal)
-    #init_go_to_goal() 
 
 # Calibrate the Drivetrain
 calibrate_drivetrain()
@@ -387,14 +379,18 @@ optical_sensor.object_detected(conveyor_hold)
 catapult_sensor.pressed(catapult_bumper_pressed)
 catapult_sensor.released(catapult_bumper_released)
 optical_sensor.object_lost(ball_passed_through_conveyor)
-controller.buttonLDown.pressed(skills_main_loop)
 # add 15ms delay to make sure events are registered correctly.
 wait(15, MSEC)
 
 when_started()
+away_from_goal_thread = Thread(away_from_goal)
+remote_control_code_enabled = True
+rc_auto_loop_thread_controller = Thread(rc_auto_loop_function_controller)
 
-if not is_match_started:
+while not is_match_started:
     wait(20, MSEC)
+
+intake_motor.spin(FORWARD)
 
 # wait(60, SECONDS)
 
