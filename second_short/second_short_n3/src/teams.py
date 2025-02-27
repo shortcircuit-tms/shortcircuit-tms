@@ -104,11 +104,12 @@ at_the_goal = False
 at_the_right_goal = False
 at_the_left_goal = False
 is_match_started = False
+is_intake_forward = True
 #If value is true, it's on the left, and if it's false, it's on the right
 
 def when_started():
     global conveyor_state, conveyor
-    global is_intake_on, intake_motor
+    global is_intake_on, intake_motor, is_intake_forward
     global is_catapult_on, catapult_motor, is_catapult_loaded
     global drivetrain_l_distance_sensor, drivetrain_r_distance_sensor
     global at_the_goal, at_the_left_goal, at_the_right_goal
@@ -118,6 +119,7 @@ def when_started():
     conveyor.set_max_torque(CONVEYOR_TORQUE, PERCENT)
     conveyor.set_velocity(CONVEYOR_VELOCITY, PERCENT)
     is_intake_on = False
+    is_intake_forward = True
     intake_motor.set_max_torque(INTAKE_TORQUE, PERCENT)
     intake_motor.set_velocity(INTAKE_VELOCITY, PERCENT)
     is_catapult_on = False
@@ -207,6 +209,16 @@ def intake_on_off():
     else:
         intake_motor.spin(FORWARD)
         is_intake_on = True
+
+def toggle_intake_direction():
+    global is_intake_forward
+    
+    if is_intake_forward:
+        intake_motor.spin(REVERSE)
+        is_intake_forward = False
+    else:
+        intake_motor.spin(FORWARD)
+        is_intake_forward = True
 
 def init_go_to_goal():
     left_drive_smart.spin(FORWARD, 100)
@@ -378,6 +390,7 @@ def conveyor_unload_no_check():
 # system event handlers
 controller.buttonLUp.pressed(catapult_unload)
 #controller.buttonLDown.pressed()
+controller.buttonLDown.pressed(toggle_intake_direction)
 controller.buttonRUp.pressed(conveyor_unload)
 controller.buttonRDown.pressed(conveyor_unload_no_check)
 controller.buttonEUp.pressed(go_to_left_back_q)
@@ -399,6 +412,7 @@ while not is_match_started:
     wait(20, MSEC)
 
 intake_motor.spin(FORWARD)
+is_intake_forward = True
 
 
 # wait(60, SECONDS)

@@ -7,7 +7,7 @@ from vex import *
 import urandom
 
 
-INTAKE_VELOCITY = 100
+INTAKE_VELOCITY = 75
 INTAKE_TORQUE = 100
 DRIVETRAIN_VELOCITY = 100
 DRIVETRAIN_TORQUE = 100
@@ -23,25 +23,27 @@ CONVEYOR_LOADING = 2
 CONVEYOR_LOADED = 3
 
 DRIVE_MAX_VELOCITY = 100
-START_BACKUP_DIST = 17
-START_TO_I_GOAL_DIST = 48
-START_TURN_ANGLE = 77
+START_TURN_ANGLE = 25
+START_FORWARD_DIST = 34
+START_LOAD_DIST = 6
+START_TO_I_GOAL_ANGLE = 124
+START_TO_I_GOAL_DIST = 34
 BALL_PICKUP_ZONE_DISTANCE = 28
 BALL_PICKUP_ZONE_VELOCITY = 100
-BALL_PICKUP_LOAD_DISTACE = 18
+BALL_PICKUP_LOAD_DISTACE = 14
 BALL_PICKUP_LOAD_VELOCITY = 40
 RETURN_TO_I_GOAL_DISTANCE = BALL_PICKUP_ZONE_DISTANCE + BALL_PICKUP_LOAD_DISTACE + 4
 RETURN_TO_I_GOAL_VELOCITY = 100
-ADJUST_TO_GOAL_TIME_1 = 500
-ADJUST_TO_GOAL_TIME_2 = 300
+ADJUST_TO_GOAL_TIME_1 = 300
+ADJUST_TO_GOAL_TIME_2 = 200
 ADJUST_TO_GOAL_VELOCITY = 85
 X_GOAL_ANGLE = 40
 RETURN_TO_X_GOAL_VELOCITY = 100
-RETURN_TO_X_GOAL_DISTANCE = 38.5
+RETURN_TO_X_GOAL_DISTANCE = 32
 
-CONVEYOR_TOP_UNLOAD_TIME = 1500
-CONVEYOR_BOTTOM_UNLOAD_TIME = 2000
-CATAPULT_WAIT_TIME = 1000
+CONVEYOR_TOP_UNLOAD_TIME = 750
+CONVEYOR_BOTTOM_UNLOAD_TIME = 1500
+CATAPULT_WAIT_TIME = 500
 LEFT_WHEEL_SCALE_DOWN = 0.965
 
 # Port configurations
@@ -143,30 +145,53 @@ def drive_staight(direction, distance, velocity, use_smart_drive = False, do_wai
         left_drive_smart.spin(direction, velocity*LEFT_WHEEL_SCALE_DOWN)
         right_drive_smart.spin(direction, velocity)
         wait(int(driving_time), MSEC)
-        left_drive_smart.stop()
-        right_drive_smart.stop()
+        pid_stop()
 
-def adjust_to_goal():
+def adjust_to_goal_f():
     left_drive_smart.spin(REVERSE, ADJUST_TO_GOAL_VELOCITY)
     right_drive_smart.spin(REVERSE, ADJUST_TO_GOAL_VELOCITY)
     wait(int(ADJUST_TO_GOAL_TIME_1), MSEC)
     left_drive_smart.stop()
     right_drive_smart.stop()
-    wait(100, MSEC)
     left_drive_smart.spin(REVERSE, ADJUST_TO_GOAL_VELOCITY)
     right_drive_smart.spin(REVERSE, ADJUST_TO_GOAL_VELOCITY)
     wait(int(ADJUST_TO_GOAL_TIME_2), MSEC)
     left_drive_smart.stop()
     right_drive_smart.stop()
 
+def adjust_to_goal_r():
+    left_drive_smart.spin(REVERSE, ADJUST_TO_GOAL_VELOCITY)
+    right_drive_smart.spin(REVERSE, ADJUST_TO_GOAL_VELOCITY)
+    wait(int(ADJUST_TO_GOAL_TIME_1), MSEC)
+    left_drive_smart.stop()
+    right_drive_smart.stop()
+
 myVariable = 0
 launcher_speed = 0
-conveyor_state = CONVEYOR_INIT 
+conveyor_state = CONVEYOR_LOADED 
 is_intake_on = False
 is_catapult_loaded = False
 is_catapult_on = False
 start_auton = False
 stop_auton = False
+
+def pid_stop():
+    done = False
+    while not done:
+        right_motor_velocity = right_drive_smart.velocity(PERCENT)
+        if right_motor_velocity < -10:
+            new_right_motor_velocity = right_motor_velocity + 10
+        elif right_motor_velocity > 10:
+            new_right_motor_velocity = right_motor_velocity - 10
+        else:
+            new_right_motor_velocity = 0
+            done = True
+        
+        new_left_motor_velocity = new_right_motor_velocity * LEFT_WHEEL_SCALE_DOWN
+        left_drive_smart.set_velocity(new_left_motor_velocity, PERCENT)
+        right_drive_smart.set_velocity(new_right_motor_velocity, PERCENT)
+
+        wait(20, MSEC)
 
 def when_started():
     global conveyor_state, conveyor
@@ -174,7 +199,7 @@ def when_started():
     global is_catapult_on, catapult_motor, is_catapult_loaded
     global start_auton, stop_auton
 
-    conveyor_state = CONVEYOR_INIT
+    conveyor_state = CONVEYOR_LOADED
     conveyor.set_max_torque(CONVEYOR_TORQUE, PERCENT)
     conveyor.set_velocity(CONVEYOR_VELOCITY, PERCENT)
     is_intake_on = False
@@ -185,6 +210,8 @@ def when_started():
     catapult_motor.set_max_torque(CATAPULT_TORQUE, PERCENT)
     catapult_motor.set_velocity(CATAPULT_VELOCITY, PERCENT)
     catapult_motor.set_stopping(HOLD)
+    left_drive_smart.set_stopping(BRAKE)
+    right_drive_smart.set_stopping(BRAKE)
     drivetrain.set_turn_velocity(DRIVETRAIN_TURN_VELOCITY, PERCENT)
     drivetrain.set_drive_velocity(DRIVETRAIN_VELOCITY, PERCENT)
     start_auton = False
@@ -246,16 +273,14 @@ def go_back_and_load():
     drive_staight(direction=FORWARD, 
                   distance=BALL_PICKUP_ZONE_DISTANCE, 
                   velocity=BALL_PICKUP_ZONE_VELOCITY, 
-                  use_smart_drive = False,
+                  use_smart_drive = True,
                   do_wait=True)
-    wait(500, MSEC)
     conveyor_load()
     drive_staight(direction=FORWARD, 
                   distance=BALL_PICKUP_LOAD_DISTACE, 
                   velocity=BALL_PICKUP_LOAD_VELOCITY, 
                   use_smart_drive = True,
                   do_wait=True)
-    wait(750, MSEC)
 
     
 def go_to_i_goal():
@@ -264,10 +289,10 @@ def go_to_i_goal():
                   velocity=RETURN_TO_I_GOAL_VELOCITY, 
                   use_smart_drive = False,
                   do_wait=True)
-    adjust_to_goal()
+    adjust_to_goal_f()
 
 def go_to_x_goal():
-    drivetrain.turn_for(direction=RIGHT,
+    drivetrain.turn_for(direction=LEFT,
                         angle=X_GOAL_ANGLE,
                         units=DEGREES)
     wait(250, MSEC)
@@ -276,17 +301,16 @@ def go_to_x_goal():
                   velocity=RETURN_TO_X_GOAL_VELOCITY, 
                   use_smart_drive = False,
                   do_wait=True)
-    wait(500, MSEC)
-    drivetrain.turn_for(direction=LEFT,
+    drivetrain.turn_for(direction=RIGHT,
                         angle=X_GOAL_ANGLE,
                         units=DEGREES)
-    wait(500, MSEC)
+    wait(250, MSEC)
     drive_staight(direction=REVERSE, 
-                  distance=16, 
+                  distance=18, 
                   velocity=RETURN_TO_X_GOAL_VELOCITY, 
                   use_smart_drive = False,
                   do_wait=True)
-    adjust_to_goal()
+    adjust_to_goal_f()
 
 def unload_bot_with_catapult():
     wait(CATAPULT_WAIT_TIME, MSEC)
@@ -301,6 +325,7 @@ def unload_bot_with_conveyor():
 
 def fetch_and_unload(x_goal=False, use_catapult=False):
     go_back_and_load()
+    wait(250, MSEC)
     
     if x_goal:
         go_to_x_goal()
@@ -346,15 +371,21 @@ calibrate_drivetrain()
 def auton_routine():
     global drivetrain
 
-    intake_motor.spin(FORWARD)
-    drive_staight(direction=REVERSE, 
-                  distance=START_BACKUP_DIST, 
+    intake_motor.spin(FORWARD, INTAKE_VELOCITY, PERCENT)
+    drivetrain.drive_for(FORWARD, 4, INCHES)
+    drivetrain.turn_for(direction=LEFT,
+                        angle=START_TURN_ANGLE,
+                        units=DEGREES,
+                        velocity=28,
+                        units_v=PERCENT,
+                        wait=True)
+    drive_staight(direction=FORWARD, 
+                  distance=START_FORWARD_DIST, 
                   velocity=DRIVE_MAX_VELOCITY, 
                   use_smart_drive = False,
                   do_wait=True)
-    wait(500, MSEC)
-    drivetrain.turn_for(direction=LEFT,
-                        angle=START_TURN_ANGLE,
+    drivetrain.turn_for(direction=RIGHT,
+                        angle=START_TO_I_GOAL_ANGLE,
                         units=DEGREES,
                         velocity=30,
                         units_v=PERCENT,
@@ -365,16 +396,17 @@ def auton_routine():
                   velocity=DRIVE_MAX_VELOCITY, 
                   use_smart_drive = False,
                   do_wait=True)
-    wait(200, MSEC)
-    adjust_to_goal()
     wait(CATAPULT_WAIT_TIME, MSEC)
-    catapult_button_on_off()
+    unload_bot_with_catapult()
     wait(500, MSEC)
+    adjust_to_goal_r()
     fetch_and_unload(x_goal=False, use_catapult=True)
+    adjust_to_goal_r()
     fetch_and_unload(x_goal=True, use_catapult=True)
     fetch_and_unload(x_goal=False, use_catapult=True)
     while not stop_auton:
         fetch_and_unload(x_goal=False, use_catapult=False)
+        adjust_to_goal_r()
 
 calib_velocity = 100
 def caliberate_distance():
