@@ -17,8 +17,7 @@ CATAPULT_TORQUE = 100
 CONVEYOR_VELOCITY = 100
 CONVEYOR_TORQUE = 100
 
-AT_THE_GOAL_FRONT_S_DIST_TH_CATAPULT = 75
-AT_THE_GOAL_FRONT_S_DIST_TH_CONVEYOR = 30
+AT_THE_GOAL_FRONT_S_DIST_TH = 75
 AT_THE_GOAL_LEFT_S_DIST_TH = 500
 AWAY_FROM_GOAL_FRONT_S_DIST_TH = 200 
 
@@ -149,7 +148,7 @@ def conveyor_load():
 
 def conveyor_unload():
     global conveyor, conveyor_state
-    if front_distance.object_distance() < AT_THE_GOAL_FRONT_S_DIST_TH_CONVEYOR:
+    if front_distance.object_distance() < AT_THE_GOAL_FRONT_S_DIST_TH:
         conveyor.spin(FORWARD)
         conveyor_state = CONVEYOR_UNLOADING
 
@@ -163,7 +162,7 @@ def catapult_unload():
     global is_catapult_on, catapult_motor, at_the_goal
     global at_the_right_goal, at_the_left_goal
 
-    if front_distance.object_distance() < AT_THE_GOAL_FRONT_S_DIST_TH_CATAPULT:
+    if front_distance.object_distance() < AT_THE_GOAL_FRONT_S_DIST_TH:
         catapult_motor.spin(FORWARD)
         is_catapult_on = True
         at_the_goal = True
@@ -176,7 +175,7 @@ def catapult_unload():
 
 def ball_passed_through_conveyor():
     global at_the_goal, at_the_right_goal, at_the_left_goal
-    if front_distance.object_distance() < AT_THE_GOAL_FRONT_S_DIST_TH_CONVEYOR:
+    if front_distance.object_distance() < AT_THE_GOAL_FRONT_S_DIST_TH:
         at_the_goal = True
         if left_distance.object_distance() < AT_THE_GOAL_LEFT_S_DIST_TH:
             at_the_left_goal = True
