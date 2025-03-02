@@ -51,11 +51,11 @@ LEFT_WHEEL_SCALE_DOWN = 0.965
 # looking from behind the bot towards the flyweel
  
 CONVEYOR_L_PORT = Ports.PORT1
+CATAPULT_OPTICAL_SENSOR_PORT = Ports.PORT3
 CATAPULT_PORT = Ports.PORT2
 INTAKE_PORT = Ports.PORT4
 CONVEYOR_R_PORT = Ports.PORT5
 OPTICAL_SENSOR_PORT = Ports.PORT6
-CATAPULT_SENSOR_PORT = Ports.PORT8
 DRIVETRAIN_L_PORT = Ports.PORT9
 DRIVETRAIN_R_PORT = Ports.PORT10
 DISTANCE_SENSOR_PORT = Ports.PORT11
@@ -76,7 +76,7 @@ conveyor_motor_l = Motor(CONVEYOR_L_PORT, True)
 conveyor = MotorGroup(conveyor_motor_r, conveyor_motor_l)
 intake_motor = Motor(INTAKE_PORT, True)
 catapult_motor = Motor(CATAPULT_PORT, False)
-catapult_sensor = Bumper(CATAPULT_SENSOR_PORT)
+catapult_sensor = Optical(CATAPULT_OPTICAL_SENSOR_PORT)
 optical_sensor = Optical(OPTICAL_SENSOR_PORT)
 
 # set up drivetrain
@@ -250,13 +250,13 @@ def catapult_button_on_off():
         catapult_motor.spin(FORWARD)
         is_catapult_on = True
 
-def catapult_bumper_pressed():
+def catapult_lowered():
     global is_catapult_loaded, catapult_motor, is_catapult_on
     catapult_motor.stop()
     is_catapult_on = False
     is_catapult_loaded = True
 
-def catapult_bumper_released():
+def catapult_released():
     global is_catapult_loaded
     is_catapult_loaded = False
 
@@ -439,8 +439,8 @@ def calib_go_forward_one_half():
 # system event handlers
 brain.buttonLeft.pressed(set_start_auton)
 optical_sensor.object_detected(conveyor_hold)
-catapult_sensor.pressed(catapult_bumper_pressed)
-catapult_sensor.released(catapult_bumper_released)
+catapult_sensor.object_detected(catapult_lowered)
+catapult_sensor.object_lost(catapult_released)
 # add 15ms delay to make sure events are registered correctly.
 wait(750, MSEC)
 when_started()
