@@ -17,7 +17,7 @@ CATAPULT_TORQUE = 100
 CONVEYOR_VELOCITY = 100
 CONVEYOR_TORQUE = 100
 
-AT_THE_GOAL_FRONT_S_DIST_TH = 30
+AT_THE_GOAL_FRONT_S_DIST_TH = 75
 AT_THE_GOAL_LEFT_S_DIST_TH = 500
 AWAY_FROM_GOAL_FRONT_S_DIST_TH = 200 
 
@@ -41,12 +41,12 @@ CONVEYOR_LOADED = 4
 # looking from behind the bot towards the flyweel
  
 CONVEYER_L_PORT = Ports.PORT1
+CATAPULT_OPTICAL_SENSOR_PORT = Ports.PORT3
 CATAPULT_PORT = Ports.PORT2
 INTAKE_PORT = Ports.PORT4
 CONVEYER_R_PORT = Ports.PORT5
 OPTICAL_SENSOR_PORT = Ports.PORT6
 RIGHT_DISTANCE_SENSOR_PORT = Ports.PORT7
-CATAPULT_SENSOR_PORT = Ports.PORT8
 DRIVETRAIN_L_PORT = Ports.PORT9
 DRIVETRAIN_R_PORT = Ports.PORT10
 FRONT_DISTANCE_SENSOR_PORT = Ports.PORT11
@@ -68,7 +68,7 @@ conveyor_motor_l = Motor(CONVEYER_L_PORT, True)
 conveyor = MotorGroup(conveyor_motor_r, conveyor_motor_l)
 intake_motor = Motor(INTAKE_PORT, True)
 catapult_motor = Motor(CATAPULT_PORT, False)
-catapult_sensor = Bumper(CATAPULT_SENSOR_PORT)
+catapult_sensor = Optical(CATAPULT_OPTICAL_SENSOR_PORT)
 optical_sensor = Optical(OPTICAL_SENSOR_PORT)
 front_distance = Distance(FRONT_DISTANCE_SENSOR_PORT)
 left_distance = Distance(LEFT_DISTANCE_SENSOR_PORT)
@@ -191,13 +191,13 @@ def away_from_goal():
             at_the_right_goal = False
             conveyor_state = CONVEYOR_LOADING
 
-def catapult_bumper_pressed():
+def catapult_lowered():
     global is_catapult_loaded, catapult_motor, is_catapult_on
     catapult_motor.stop()
     is_catapult_on = False
     is_catapult_loaded = True
 
-def catapult_bumper_released():
+def catapult_released():
     global is_catapult_loaded
     is_catapult_loaded = False
 
@@ -396,8 +396,8 @@ controller.buttonRDown.pressed(conveyor_unload_no_check)
 controller.buttonEUp.pressed(go_to_left_back_q)
 controller.buttonEDown.pressed(go_to_right_back_q)
 optical_sensor.object_detected(conveyor_hold)
-catapult_sensor.pressed(catapult_bumper_pressed)
-catapult_sensor.released(catapult_bumper_released)
+catapult_sensor.object_detected(catapult_lowered)
+catapult_sensor.object_lost(catapult_released)
 optical_sensor.object_lost(ball_passed_through_conveyor)
 # add 15ms delay to make sure events are registered correctly.
 wait(15, MSEC)
