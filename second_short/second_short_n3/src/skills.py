@@ -17,7 +17,8 @@ CATAPULT_TORQUE = 100
 CONVEYOR_VELOCITY = 100
 CONVEYOR_TORQUE = 100
 
-AT_THE_GOAL_FRONT_S_DIST_TH = 30
+AT_THE_GOAL_FRONT_S_DIST_TH_CATAPULT = 75
+AT_THE_GOAL_FRONT_S_DIST_TH_CONVEYOR = 30
 AT_THE_GOAL_LEFT_S_DIST_TH = 500
 AWAY_FROM_GOAL_FRONT_S_DIST_TH = 200 
 
@@ -43,6 +44,7 @@ LEFT_WHEEL_SCALE_DOWN = 0.965
  
 CONVEYER_L_PORT = Ports.PORT1
 CATAPULT_PORT = Ports.PORT2
+CATAPULT_OPTICAL_SENSOR_PORT = Ports.PORT3
 INTAKE_PORT = Ports.PORT4
 CONVEYER_R_PORT = Ports.PORT5
 OPTICAL_SENSOR_PORT = Ports.PORT6
@@ -69,7 +71,7 @@ conveyor_motor_l = Motor(CONVEYER_L_PORT, True)
 conveyor = MotorGroup(conveyor_motor_r, conveyor_motor_l)
 intake_motor = Motor(INTAKE_PORT, True)
 catapult_motor = Motor(CATAPULT_PORT, False)
-catapult_sensor = Bumper(CATAPULT_SENSOR_PORT)
+catapult_sensor = Optical(CATAPULT_OPTICAL_SENSOR_PORT)
 optical_sensor = Optical(OPTICAL_SENSOR_PORT)
 front_distance = Distance(FRONT_DISTANCE_SENSOR_PORT)
 left_distance = Distance(LEFT_DISTANCE_SENSOR_PORT)
@@ -147,7 +149,7 @@ def conveyor_load():
 
 def conveyor_unload():
     global conveyor, conveyor_state
-    if front_distance.object_distance() < AT_THE_GOAL_FRONT_S_DIST_TH:
+    if front_distance.object_distance() < AT_THE_GOAL_FRONT_S_DIST_TH_CONVEYOR:
         conveyor.spin(FORWARD)
         conveyor_state = CONVEYOR_UNLOADING
 
@@ -161,7 +163,7 @@ def catapult_unload():
     global is_catapult_on, catapult_motor, at_the_goal
     global at_the_right_goal, at_the_left_goal
 
-    if front_distance.object_distance() < AT_THE_GOAL_FRONT_S_DIST_TH:
+    if front_distance.object_distance() < AT_THE_GOAL_FRONT_S_DIST_TH_CATAPULT:
         catapult_motor.spin(FORWARD)
         is_catapult_on = True
         at_the_goal = True
@@ -174,7 +176,7 @@ def catapult_unload():
 
 def ball_passed_through_conveyor():
     global at_the_goal, at_the_right_goal, at_the_left_goal
-    if front_distance.object_distance() < AT_THE_GOAL_FRONT_S_DIST_TH:
+    if front_distance.object_distance() < AT_THE_GOAL_FRONT_S_DIST_TH_CONVEYOR:
         at_the_goal = True
         if left_distance.object_distance() < AT_THE_GOAL_LEFT_S_DIST_TH:
             at_the_left_goal = True
@@ -190,13 +192,13 @@ def away_from_goal():
             at_the_right_goal = False
             conveyor_state = CONVEYOR_LOADING
 
-def catapult_bumper_pressed():
+def catapult_lowered():
     global is_catapult_loaded, catapult_motor, is_catapult_on
     catapult_motor.stop()
     is_catapult_on = False
     is_catapult_loaded = True
 
-def catapult_bumper_released():
+def catapult_released():
     global is_catapult_loaded
     is_catapult_loaded = False
 
@@ -377,8 +379,8 @@ controller.buttonRUp.pressed(conveyor_unload)
 controller.buttonEUp.pressed(go_to_left_back_q)
 controller.buttonEDown.pressed(go_to_right_back_q)
 optical_sensor.object_detected(conveyor_hold)
-catapult_sensor.pressed(catapult_bumper_pressed)
-catapult_sensor.released(catapult_bumper_released)
+catapult_sensor.object_detected(catapult_lowered)
+catapult_sensor.object_lost(catapult_released)
 optical_sensor.object_lost(ball_passed_through_conveyor)
 # add 15ms delay to make sure events are registered correctly.
 wait(15, MSEC)
